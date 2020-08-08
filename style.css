@@ -1,0 +1,81 @@
+body {
+  font-family: sans-serif;
+  line-height: 1.5;
+  margin: 2em auto;
+  max-width: 40em;
+}
+header {
+  display: flex;
+  align-items: center;
+  margin-left: -48px;
+}
+section {
+  margin: 2em 0;
+  padding: 1em;
+  border-radius: 1em;
+  box-shadow: 0 0 0.5em 0 rgba(0,0,0,.15);
+  transition: box-shadow 0.2s ease;
+}
+section:hover {
+  box-shadow: 0 0 1em 0 rgba(0,0,0,.15);
+}
+aside {
+  
+}
+h1,
+a,
+a:visited {
+  color: #06c;
+  text-decoration: none;
+}
+h2 {
+  margin: 0 0 1em;
+  color: #036;
+}
+img {
+  margin: 0 -1em;
+}
+.note {
+  padding: 0 1em;
+  background-color: #06c;
+  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  transition: height 0.2s ease;
+  height: 0;
+  overflow: hidden;
+}
+.button:hover ~ .note {
+  height: 1.5em;
+}
+.button {
+  display: inline-block;
+  margin: 0 1em 0 0;
+  padding: 0.5em 1em;
+  border-radius: 0.5em;
+  background-color: #06c;
+  color: white;
+  border: #06c 2px solid;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.button:hover {
+  background-color: white;
+  color: #06c;
+}
+span {
+  color: #06c;
+}
+kbd {
+  font-family: sans-serif;
+  padding: 0 0.5em;
+  background-color: #eee;
+  color: #333;
+  border-radius: 0.5em;
+}
+footer {
+  margin-top: 2em;
+  color: #666;
+}
