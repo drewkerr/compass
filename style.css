@@ -15,11 +15,11 @@ header {
 section {
   margin: 2rem 0;
   border-radius: 1rem;
-  box-shadow: 0 0 0.5rem 0 rgba(0,0,0,.15);
+  box-shadow: 0 0 0.5rem 0 rgba(0,0,0,0.2);
   transition: box-shadow 0.2s ease;
 }
 section:hover {
-  box-shadow: 0 0 1rem 0 rgba(0,0,0,.15);
+  box-shadow: 0 0 1rem 0 rgba(0,0,0,0.2);
 }
 h1,
 a,
@@ -84,7 +84,7 @@ footer {
     margin-left: -3rem;
   }
   .button:before {
-    content: '↑ Click & drag up to your Bookmarks Bar.';
+    content: '↑ Drag the button to your Bookmarks Bar to use in Compass.';
     position: fixed;
     top: 0;
     left: 0;
@@ -95,11 +95,12 @@ footer {
     text-align: center;
     line-height: 1.5;
     height: 0;
-    transition: height 0.2s ease;
+    transition: height 0.2s ease, box-shadow 0.2s ease;
     overflow: hidden;
   }
   .button:hover:before {
-    height: 1.5em;
+    height: 1.5rem;
+    box-shadow: 0 0 1rem 0 rgba(0,0,0,0.2);
   }
   .button:after {
     content: '← drag to your bookmarks';
