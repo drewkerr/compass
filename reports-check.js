@@ -18,7 +18,7 @@ $(document).ready(function() {
         top: 0;
         padding: 64px calc(50% - 490px);
         z-index: 100;
-        background-color: #e3e3e3;
+        background-color: #f0f2f5;
         width: 100%;
         height: 100%;
         overflow: scroll;
@@ -215,23 +215,25 @@ $(document).ready(function() {
     var total = data.d.length
     var count = 0
     $.each(data.d, function() {
-      var entityId = this.id
-      var activityId = this.activityId
-      var activity = $('<details>').addClass(`${entityId} activity`).appendTo(staff)
-      var summary = $('<summary>').appendTo(activity)
-      $('<div>').html(`<a href="/Organise/Activities/Activity.aspx#activity/${activityId}" target="_blank">${this.activityName} - ${this.subjectName}</a>`).appendTo(summary)
-      $('<div>').addClass('kats').appendTo(summary)
-      $('<div>').addClass('elements').appendTo(summary)
-      $.when(getReports(entityId, cycleId), getTasks(activityId))
-      .done(function(results, tasks) {
-        loadTasks(tasks[0], entityId, userId, cycleId)
-        loadReports(results[0], entityId, userId, cycleId)
-      }).done(function() {
-        if (!staff.hasClass('complete')) staff.addClass('complete')
-        count++
-        var percent = count / total * 100
-        progress.css({ background: `-webkit-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0) ${percent}%, white ${percent}%, white)` })
-      })
+      if (this.subjectName != "YDuties" && this.subjectName != "YDBUS") {
+        var entityId = this.id
+        var activityId = this.activityId
+        var activity = $('<details>').addClass(`${entityId} activity`).appendTo(staff)
+        var summary = $('<summary>').appendTo(activity)
+        $('<div>').html(`<a href="/Organise/Activities/Activity.aspx#activity/${activityId}" target="_blank">${this.activityName} - ${this.subjectName}</a>`).appendTo(summary)
+        $('<div>').addClass('kats').appendTo(summary)
+        $('<div>').addClass('elements').appendTo(summary)
+        $.when(getReports(entityId, cycleId), getTasks(activityId))
+        .done(function(results, tasks) {
+          loadTasks(tasks[0], entityId, userId, cycleId)
+          loadReports(results[0], entityId, userId, cycleId)
+        }).done(function() {
+          if (!staff.hasClass('complete')) staff.addClass('complete')
+          count++
+          var percent = count / total * 100
+          progress.css({ background: `-webkit-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0) ${percent}%, white ${percent}%, white)` })
+        })
+      }
     })
   }
 
@@ -287,10 +289,10 @@ $(document).ready(function() {
         if (this.taskReportDescription.includes("\n\n")) {
           message(kat, 'warning', katCount, " has extra text in description (edit Learning Task > Reporting and remove extra text from Task Summary Description)")
         }
-        if (!(this.name.startsWith("Key Assessment Task") || this.name.startsWith("Unit"))) {
+        if (!(this.name.startsWith("Key Assessment Task") || this.name.startsWith("Unit") || this.name.startsWith("Exam") || this.name.startsWith("SAC"))) {
           message(kat, 'warning', katCount, `: ${this.name} does not follow naming format (edit Learning Task and check Name)`)
         }
-        if (this.gradingItems && this.gradingItems.filter(grade => grade.includeInSemesterReport === true).length < 2) {
+        if (this.gradingItems && this.gradingItems.filter(grade => grade.includeInSemesterReport === true).length < 1) {
           message(kat, 'error', katCount, " grading components disabled (edit Learning Task > Reporting and check Components are ticked)")
         }
         if (this.securityOptions && this.securityOptions.filter(grade => grade.gradingVisible === false).length) {

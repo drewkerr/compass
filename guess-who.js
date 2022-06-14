@@ -12,7 +12,40 @@ switch (hash[0]){
 if ($('body #guess').length) {
   $('body #guess').remove();
 }
-$('<div id="guess"><style type="text/css">#guess { position: fixed; box-sizing: border-box; top: 0; padding: 0; z-index: 1000; background-color: #e3e3e3; width: 100%; height: 100%; overflow: scroll; -webkit-overflow-scrolling: touch; } .header { display: flex; align-items: flex-start; margin: 1em; } #guess img { margin: 0 0 1vw 1vw; width: 11vw; border-radius: 1vw; } .button { margin-left: 1em; padding: 0.5em 1em; border-radius: 0.5em; color: #666; border: #666 1px solid; } .button:hover { background-color: #ccc; }</style></div>').appendTo('body');
+$(`<div id="guess"><style type="text/css">
+#guess {
+	position: fixed;
+	box-sizing: border-box;
+	top: 0;
+	padding: 0;
+	z-index: 1000;
+	background-color: #f0f2f5;
+	width: 100%;
+	height: 100%;
+	overflow: scroll;
+	-webkit-overflow-scrolling: touch;
+}
+.header {
+	display: flex;
+	align-items: flex-start;
+	margin: 1em;
+}
+#guess img {
+	margin: 0 0 1vw 1vw;
+	width: 11vw;
+	border-radius: 1vw;
+}
+.button {
+	margin-left: 1em;
+	padding: 0.5em 1em;
+	border-radius: 0.5em;
+	color: #666;
+	border: #666 1px solid;
+}
+.button:hover {
+	background-color: #ccc;
+}
+</style></div>`).appendTo('body');
 $('<div>').addClass('header').appendTo('#guess');
 $('<h1>').addClass('title').text('Guess Who?').appendTo('#guess .header');
 $('<div>').addClass('button').text('Reset')
@@ -24,13 +57,13 @@ $('<div>').addClass('button').text('Close')
     window.single = false;
     $('#guess').remove();
 }).appendTo('#guess .header');
-$.ajax("/Services/Attendance.svc/GetRollPackage"+"?_dc="+new Date().getTime(),{
+$.ajax("/Services/Attendance.svc/GetRollPackage",{
   data: JSON.stringify({
     instanceId: instanceId}),
   contentType:'application/json',
   type:'POST'})
-.done(function(data) {
-  $.each(data.d.rollData, function() {
+.done(function(rolldata) {
+  $.each(rolldata.d.data.rollData, function() {
     var url = this.img.split('roll');
     if (url[1] == '/no_user_pic.jpg') {
       var src = this.img;

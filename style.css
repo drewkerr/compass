@@ -4,6 +4,7 @@ body {
   margin: 1rem auto 0;
   padding: 1rem;
   max-width: 40rem;
+  background-color: #f0f2f5;
 }
 p {
   line-height: 1.5;
@@ -14,6 +15,7 @@ header {
 }
 section {
   margin: 2rem 0;
+  background: white;
   border-radius: 1rem;
   box-shadow: 0 0 0.5rem 0 rgba(0,0,0,0.2);
   transition: box-shadow 0.2s ease;
@@ -33,14 +35,14 @@ h2 {
   color: #036;
 }
 .hero {
+  position: relative;
   max-height: 12rem;
   overflow: hidden;
-  box-shadow: 0 -3rem 1rem -2rem white inset;
+  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
 }
 .hero img {
   width: 100%;
-  position: relative;
-  z-index: -1;
 }
 section p {
   margin: 0;
