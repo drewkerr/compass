@@ -7,7 +7,69 @@ if (!window.single){
 if ($('body #dash').length){
   $('body #dash').remove();
 }
-var wrapper=$('<div id="dash"><style type="text/css">#dash{display:flex;align-items:center;flex-direction:column;position:fixed;box-sizing:border-box;top:0;padding:64px calc(50% - 490px);z-index:100;background-color:#e3e3e3;width:100%;height:100%;overflow:scroll;-webkit-overflow-scrolling:touch;}#dash .header{display:flex;justify-content:space-between;align-items:center;margin:1em;width:100%;}#dash .button{margin-left:1em;padding:0.5em 1em;border-radius:0.5em;color:#666;border:#666 1px solid;}#dash .button:hover{background-color:#ccc;}#dash li{margin:1em 0;text-align:center;font-size:125%;}@keyframes spin{0%{transform:rotate(0) rotateX(0);}100%{transform:rotate(180deg) rotateX(360deg);}}#dash .graph{display:flex;align-items:baseline;width:100%;position:fixed;bottom:0;}#dash .bar{background-color:#2e466b;flex-grow:1;}#dash .bar:hover{background-color:#ff3333;}</style></div>').appendTo('body');
+var wrapper=$(`<div id="dash"><style type="text/css">
+#dash {
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	position: fixed;
+	box-sizing: border-box;
+	top: 0;
+	padding: 64px calc(50% -
+	490px);
+	z-index: 100;
+	background-color: #f0f2f5;
+	width: 100%;
+	height: 100%;
+	overflow: scroll;
+	-webkit-overflow-scrolling: touch;
+}
+#dash .header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin: 1em;
+	width: 100%;
+}
+#dash .button {
+	margin-left: 1em;
+	padding: 0.5em
+	1em;
+	border-radius: 0.5em;
+	color: #666;
+	border: #666 1px solid;
+}
+#dash .button:hover {
+	background-color: #ccc;
+}
+#dash li {
+	margin: 1em 0;
+	text-align: center;
+	font-size: 125%;
+}
+@keyframes spin {
+	0% {
+		transform: rotate(0) rotateX(0);
+	}
+	100% {
+		transform: rotate(180deg) rotateX(360deg);
+	}
+}
+#dash .graph {
+	display: flex;
+	align-items: baseline;
+	width: 100%;
+	position: fixed;
+	bottom: 0;
+}
+#dash .bar {
+	background-color: #3e85f2;
+	flex-grow: 1;
+}
+#dash .bar:hover {
+	background-color: #ff3333;
+}
+</style></div>`).appendTo('body');
 $('<div>').addClass('header').appendTo('#dash');
 $('<div>').addClass('date').appendTo('#dash .header');
 $('<h1>').addClass('title').text('Happy Birthday').appendTo('#dash');

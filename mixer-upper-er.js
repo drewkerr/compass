@@ -7,10 +7,11 @@ $(document).ready(function() {
   }
 
   var hash = window.location.hash.split('/')
-  switch (hash[0]) {
-    case '#activity': var activityId = hash[1]; break;
-    case '#session': var activityId = hash[1].slice(0, -12); break;
-    default: alert('Open a class page first.'); return;
+  if (hash[0] == '#session') {
+    var instanceId = hash[1]
+  } else {
+    alert('Open a class page first.')
+    return
   }
 
   if ($('body #mix').length) {
@@ -25,7 +26,7 @@ $(document).ready(function() {
           top: 0;
           padding: 0 calc(50% - 490px);
           z-index: 1000;
-          background-color: #e3e3e3;
+          background-color: #f0f2f5;
           width: 100%;
           height: 100%;
           overflow: scroll;
@@ -33,7 +34,8 @@ $(document).ready(function() {
         }
         .ui {
           display: flex;
-          align-items: flex-start;
+          justify-content: center;
+          align-items: center;
           margin: 1em;
         }
         table {
@@ -42,9 +44,12 @@ $(document).ready(function() {
           box-shadow: 0 0 1em rgba(0, 0, 0, 0.2);
           transform-origin: top left;
         }
-        caption {
+        .caption {
+          transform: rotate(-90deg) translateY(-44vw);
+          position: absolute;
           font-weight: bold;
-          padding: 0 1em 1em;
+          font-size: 6vh;
+          color: #ccc;
         }
         tbody tr {
           border-top: #ccc 2px solid;
@@ -69,6 +74,9 @@ $(document).ready(function() {
         td:first-child {
           opacity: 1;
           text-align: left;
+        }
+        td.absent {
+          opacity: 0.25;
         }
         th.highlight {
           background-color: black;
@@ -147,6 +155,10 @@ $(document).ready(function() {
       </style>
     </div>`).appendTo('body')
   $('<div>').addClass('ui').appendTo('#mix')
+  $('<div>')
+    .html('Classroom Mixer&#8209;upper&#8209;er')
+    .addClass('caption')
+    .appendTo('#mix .ui')
   var table = $('<div>').addClass('table').appendTo('#mix .ui')
   // var selectGroups = $('<select>').change(function() {
   //   table.empty()
@@ -190,14 +202,11 @@ $(document).ready(function() {
 
   var groups = ['Red','Orange','Yellow','Green','Blue','Purple']
 
-  function createTable(numGroups) {
+  function createTable(students, numGroups) {
     $('<table>')
       .append($('<thead>')
         .append($('<tr>')))
       .appendTo('#mix .table')
-    $('<caption>')
-      .text(`Classroom Mixer-upper-er for ${$('#ClassCodeText').text()}`)
-      .appendTo('#mix table')
     var mix = mixer(students.length, numGroups)
     //console.log(students.length, numGroups, mix)
     $('<th>').text('Name')
@@ -211,14 +220,19 @@ $(document).ready(function() {
     $.each(students, function(i, v) {
       var row = $('<tr>').appendTo('#mix tbody')
       var uid = this.uid
-      var n = this.n.split(', ')
+      var n = this.n
       $('<td>').text((i+1)+'. ')
-        .append($('<a>').text(n[1]+' '+n[0])
+        .append($('<a>').text(n)
           .attr('href','/Records/User.aspx?userId='+uid)
           .addClass('extra-info-link')
           .addClass('sel-student-name')
           .attr('data-action-tip-uid',uid)
           .attr('id',uid))
+        .addClass((i,c) => {
+          if (this.s != 1) {
+            return "absent"
+          }
+        })
         .appendTo(row)
       $.each(mix, function() {
         var colour = groups[this[i]]
@@ -246,18 +260,14 @@ $(document).ready(function() {
     $('.table').height(table.height() * scale);
   }
 
-  var students
-  $.ajax("/Services/Activity.svc/GetEnrolmentsByActivityId"+"?_dc="+new Date().getTime(),{
+  $.ajax("/Services/Attendance.svc/GetRollPackage",{
     data: JSON.stringify({
-      activityId: activityId,
-      page: 1, start: 0, limit: 30}),
+      instanceId: instanceId}),
     contentType:'application/json',
     type:'POST'})
-  .done(function(data) {
-    students = data.d.filter(function(student) {
-      return student.pi
-    })
-    createTable(5)
+  .done(function(rolldata) {
+    var students = rolldata.d.data.rollData //.filter(student => student.s == 1)
+    createTable(students, 5)
   })
   $('<div>')
     .addClass('note')
@@ -271,6 +281,6 @@ $(document).ready(function() {
            <p>For a class of 25 or fewer students, there are no repetitions – everyone is always with a new group of students for all six groupings. Teachers who are familiar with the Jigsaw cooperative learning strategy (Murdoch & Wilson, 2004, p. 34) can implement this by using Mix Column 1 as the expert group and Mix Column 6 as the home group.</p>
            <h6>References</h6>
            <p>Cox, P. (2009). <em>The Mixer-upper-er: A Systematic Way to Group Students.</em> Paper presented at the 2009 Mathematical Association of Victoria Annual Conference. La Trobe University, Bundoora.</p>
-           <span>👨🏻‍💻 Email Andrew Kerr for support</span>`)
+           <span>👨🏻‍💻 Contact Andrew Kerr for support</span>`)
       .appendTo('#mix')
 })
