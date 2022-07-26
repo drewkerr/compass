@@ -33,6 +33,7 @@ $(document).ready(function() {
         margin-left: 1em;
       }
       .button {
+        display: inline-block;
         margin-left: 1em;
         padding: 0.5em 1em;
         border-radius: 0.5em;
@@ -41,6 +42,9 @@ $(document).ready(function() {
       }
       .button:hover {
         background-color: #ccc;
+      }
+      .cycle .button {
+        margin-top: 1em;
       }
       .complete {
         background-color: rgb(219, 248, 225);
@@ -116,12 +120,13 @@ $(document).ready(function() {
       }
     }).appendTo('#dash .header')
   }
-  $('<div>').addClass('button').text('Close').click(function() {
+  $('<div>').addClass('button').text('Close').css({ "order": "2" }).click(function() {
     window.single = false
     $('#dash').remove()
   }).appendTo('#dash .header')
   $('<div>')
     .addClass('note')
+    .css({ "flex-grow": "1", "order": "1" })
     .html('👨🏻‍💻 Email Andrew Kerr for support')
     .appendTo('#dash .header')
   
@@ -153,18 +158,21 @@ $(document).ready(function() {
       $(`#${cycleId}`).show()
     } else {
       var cycle = $('<div>').attr('id', cycleId).addClass('cycle').appendTo('#dash')
+      var userId = Compass.organisationUserId
+      var user = $('<details>').addClass(`${userId} staff`).appendTo(`#${cycleId}.cycle`)
+      var summary = $('<summary>').appendTo(user)
+      $('<div>').text(selectCycle.children('option:selected').text()).appendTo(summary)
+      $('<div>').appendTo(summary)
+      user.attr('open','')
+      getActivities(cycleId, userId).done(function(data) {
+        loadActivities(data, userId, cycleId)
+      })
       if (Compass.organisationUserRoles.ReportsAdmin) {
-        getStaff(cycleId).done((users) => loadStaff(users, cycleId))
-      } else {
-        var userId = Compass.organisationUserId
-        var user = $('<details>').addClass(`${userId} staff`).appendTo(`#${cycleId}.cycle`)
-        var summary = $('<summary>').appendTo(user)
-        $('<div>').text(selectCycle.children('option:selected').text()).appendTo(summary)
-        $('<div>').appendTo(summary)
-        user.attr('open','')
-        getActivities(cycleId, userId).done(function(data) {
-          loadActivities(data, userId, cycleId)
-        })
+        $('<div>').addClass('button').text('All Staff').click(function() {
+          $(`#${cycleId} details`).remove()
+          getStaff(cycleId).done((users) => loadStaff(users, cycleId))
+          $(this).remove()
+        }).appendTo(`#${cycleId}.cycle`)
       }
     }
   }
@@ -279,7 +287,7 @@ $(document).ready(function() {
       var gp = []
       var ex = []
       $.each(this.results, function() {
-        if (this.name == "Overall Assessment") {
+        if (this.name == "Overall Assessment" || this.name == "Performance") {
           $('<div>').text(this.displayValue).appendTo(student)
           ex.push(this.displayValue == "Excellent")
         }
@@ -291,7 +299,7 @@ $(document).ready(function() {
             case "Rarely": gp.push(1); break
           }
         }
-        if (!this.value) {
+        if (!this.value || (this.itemName == "Award" && this.value == "None")) {
           issues.show()
           var text = [studentName, this.name].join(' - ')
           $('<p>').text(text).appendTo(issues)
@@ -303,7 +311,7 @@ $(document).ready(function() {
       var gpa = gp.length ? (gp.reduce((a, b) => a + b) / gp.length).toFixed(2) : "NA"
       $('<div>').text(gpa).appendTo(student)
       if (gpa >= 3.5) {
-        if (!ex.includes(false)) {
+        if (!ex.includes(false) && ex.length) {
           $('<div>').text("Excellence").addClass('complete').appendTo(student)
         } else {
           $('<div>').text("Endeavour").addClass('complete').appendTo(student)
@@ -342,23 +350,38 @@ $(document).ready(function() {
         if (!this.taskReportDescription) {
           message(kat, 'error', katCount, " has no description (edit Learning Task > Reporting and add Task Summary Description)")
         }
-        if (this.taskReportDescription.includes("\n\n")) {
-          message(kat, 'warning', katCount, " has extra text in description (edit Learning Task > Reporting and remove extra text from Task Summary Description)")
-        }
-        if (!(this.name.startsWith("Key Assessment Task") || this.name.startsWith("Unit") || this.name.startsWith("Exam") || this.name.startsWith("SAC"))) {
-          message(kat, 'warning', katCount, `: ${this.name} does not follow naming format (edit Learning Task and check Name)`)
-        }
         if (this.gradingItems && this.gradingItems.filter(grade => grade.includeInSemesterReport === true).length < 1) {
           message(kat, 'error', katCount, " grading components disabled (edit Learning Task > Reporting and check Components are ticked)")
-        }
-        if (this.securityOptions && this.securityOptions.filter(grade => grade.gradingVisible === false).length) {
-          message(kat, 'warning', katCount, " grading not visible (edit Learning Task > Basic and check Grading Visible is ticked)")
         }
         $.each(this.students, function() {
           if (!this.results) {
             message(kat, 'error', katCount, ` results missing for ${this.userName}`)
           }
         })
+        if (this.taskReportDescription.includes("\n\n")) {
+          message(kat, 'warning', katCount, " has extra text in description (edit Learning Task > Reporting and remove extra text from Task Summary Description)")
+        }
+        if (!(this.name.startsWith("Key Assessment Task") || this.name.startsWith("Unit") || this.name.startsWith("Exam") || this.name.startsWith("SAC") || this.name.startsWith("Semester") )) {
+          message(kat, 'warning', katCount, `: '${this.name}' does not follow naming format (edit Learning Task and check Name)`)
+        }
+        if (!(this.taskTitleOnReport.startsWith("Key Assessment Task") || this.taskTitleOnReport.startsWith("Unit") || this.taskTitleOnReport.startsWith("Exam") || this.taskTitleOnReport.startsWith("SAC") || this.taskTitleOnReport.startsWith("Semester") )) {
+          message(kat, 'warning', katCount, `: '${this.taskTitleOnReport}' does not follow naming format (edit Learning Task > Reporting and check Title on Report)`)
+        }
+        if (this.includeInOverall) {
+          message(kat, 'warning', katCount, `: ${this.name} is emphasised (edit Learning Task > Reporting and untick Emphasise in Task Summary)`)
+        }
+        if (this.showTaskDueDates) {
+          message(kat, 'warning', katCount, `: ${this.name} shows due date on report (edit Learning Task > Reporting and untick Display Task Due Dates)`)
+        }
+        if (this.securityOptions && this.securityOptions.filter(grade => grade.gradingVisible === false).length) {
+          message(kat, 'warning', katCount, " grading not visible (edit Learning Task > Basic and check Grading Visible is ticked)")
+        }
+        if (this.name.includes(" : ") || this.taskTitleOnReport.includes(" : ")) {
+          message(kat, 'info', katCount, " has incorrect colon use in name (edit Learning Task and remove space before colon)")
+        }
+        if (!this.dueDateTimestamp) {
+          message(kat, 'info', katCount, `: ${this.name} is missing due date (edit Learning Task and add Due Date)`)
+        }
       }
     })
     if (katCount < 3) {
