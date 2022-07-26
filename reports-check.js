@@ -33,6 +33,7 @@ $(document).ready(function() {
         margin-left: 1em;
       }
       .button {
+        display: inline-block;
         margin-left: 1em;
         padding: 0.5em 1em;
         border-radius: 0.5em;
@@ -41,6 +42,9 @@ $(document).ready(function() {
       }
       .button:hover {
         background-color: #ccc;
+      }
+      .cycle .button {
+        margin-top: 1em;
       }
       .complete {
         background-color: rgb(219, 248, 225);
@@ -53,11 +57,12 @@ $(document).ready(function() {
       }
       details {
         background-color: white;
-        border-bottom: solid 1px lightgray;
       }
-      summary div {
-        display: inline-block;
-        padding: 1em;
+      summary,
+      .excend > div {
+        display: flex;
+        align-items: center;
+        border-bottom: solid 1px lightgray;
       }
       summary {
         padding-left: 1em;
@@ -65,16 +70,29 @@ $(document).ready(function() {
       details details summary {
         padding-left: 3em;
       }
-      summary > div:first-child {
-        width: 40%;
+      .excend > div {
+        padding-left: 5em;
+      }
+      summary div,
+      .excend div div {
+        display: inline-block;
+        padding: 1em;
+      }
+      details details details summary {
+        padding: 1em 1em 1em 5em;
+      }
+      summary > div:first-child,
+      .excend div div:first-child {
         font-weight: bold;
+        width: 30%;
       }
       .kats,
       .elements {
         padding: 0;
       }
+      .excend div div:last-child,
       summary > div:last-child {
-        float: right;
+        margin-left: auto;
       }
       details p {
         margin: 0 5em 0.25em;
@@ -102,12 +120,13 @@ $(document).ready(function() {
       }
     }).appendTo('#dash .header')
   }
-  $('<div>').addClass('button').text('Close').click(function() {
+  $('<div>').addClass('button').text('Close').css({ "order": "2" }).click(function() {
     window.single = false
     $('#dash').remove()
   }).appendTo('#dash .header')
   $('<div>')
     .addClass('note')
+    .css({ "flex-grow": "1", "order": "1" })
     .html('👨🏻‍💻 Email Andrew Kerr for support')
     .appendTo('#dash .header')
   
@@ -139,7 +158,22 @@ $(document).ready(function() {
       $(`#${cycleId}`).show()
     } else {
       var cycle = $('<div>').attr('id', cycleId).addClass('cycle').appendTo('#dash')
-      getStaff(cycleId).done((users) => loadStaff(users, cycleId))
+      var userId = Compass.organisationUserId
+      var user = $('<details>').addClass(`${userId} staff`).appendTo(`#${cycleId}.cycle`)
+      var summary = $('<summary>').appendTo(user)
+      $('<div>').text(selectCycle.children('option:selected').text()).appendTo(summary)
+      $('<div>').appendTo(summary)
+      user.attr('open','')
+      getActivities(cycleId, userId).done(function(data) {
+        loadActivities(data, userId, cycleId)
+      })
+      if (Compass.organisationUserRoles.ReportsAdmin) {
+        $('<div>').addClass('button').text('All Staff').click(function() {
+          $(`#${cycleId} details`).remove()
+          getStaff(cycleId).done((users) => loadStaff(users, cycleId))
+          $(this).remove()
+        }).appendTo(`#${cycleId}.cycle`)
+      }
     }
   }
   
@@ -155,23 +189,16 @@ $(document).ready(function() {
     })
     $.each(users.d, function() {
       var userId = this.id
-      if (Compass.organisationUserRoles.ReportsAdmin || userId == Compass.organisationUserId) {
-        var user = $('<details>').addClass(`${userId} staff`).appendTo(`#${cycleId}.cycle`)
-        var summary = $('<summary>').appendTo(user)
-        $('<div>').text(this.n).appendTo(summary)
-        if (Compass.organisationUserRoles.ReportsAdmin) {
-          $('<div>').text('Email').click(function(event) {
-            event.preventDefault()
-            getUser(userId).done((user) => emailUser(user, cycleId))
-          }).appendTo(summary)
-        } else {
-          $('<div>').appendTo(summary)
-          user.attr('open','')
-        }
-        getActivities(cycleId, userId).done(function(data) {
-          loadActivities(data, userId, cycleId)
-        })
-      }
+      var user = $('<details>').addClass(`${userId} staff`).appendTo(`#${cycleId}.cycle`)
+      var summary = $('<summary>').appendTo(user)
+      $('<div>').text(this.n).appendTo(summary)
+      $('<div>').text('Email').click(function(event) {
+        event.preventDefault()
+        getUser(userId).done((user) => emailUser(user, cycleId))
+      }).appendTo(summary)
+      getActivities(cycleId, userId).done(function(data) {
+        loadActivities(data, userId, cycleId)
+      })
     })
   }
 
@@ -225,6 +252,8 @@ $(document).ready(function() {
         $('<div>').addClass('elements').appendTo(summary)
         $.when(getReports(entityId, cycleId), getTasks(activityId))
         .done(function(results, tasks) {
+          var issues = $('<details>').addClass(`${entityId} issues`).hide().appendTo(activity)
+          var summary = $('<summary>').text("Issues").appendTo(issues)
           loadTasks(tasks[0], entityId, userId, cycleId)
           loadReports(results[0], entityId, userId, cycleId)
         }).done(function() {
@@ -245,19 +274,51 @@ $(document).ready(function() {
   }
   function loadReports(results, entityId, userId, cycleId) {
     var activity = $(`#${cycleId}.cycle .${userId}.staff .${entityId}.activity .elements`)
-    var errors = activity.parent().parent()
-    var staff = errors.parent()
+    var metadata = activity.parent().parent()
+    var issues = $(`#${cycleId}.cycle .${userId}.staff .${entityId}.issues`)
+    var staff = metadata.parent()
     var elements = $('<div>').text("Completed").addClass('complete').appendTo(activity)
+    var excend = $('<details>').addClass(`${entityId} excend`).appendTo(metadata)
+    var summary = $('<summary>').text("Excellence & Endeavour").appendTo(excend)
     $.each(results.d.entities, function() {
       var studentName = this.name
+      var student = $('<div>').appendTo(excend)
+      $('<div>').text(studentName).appendTo(student)
+      var gp = []
+      var ex = []
       $.each(this.results, function() {
-        if (!this.value) {
-          var text = [studentName, this.name].join(' - ');
-          $('<p>').text(text).appendTo(errors)
+        if (this.name == "Overall Assessment" || this.name == "Performance") {
+          $('<div>').text(this.displayValue).appendTo(student)
+          ex.push(this.displayValue == "Excellent")
+        }
+        if (this.itemName == "Work Habits") {
+          switch (this.value) {
+            case "Consistently": gp.push(4); break
+            case "Usually": gp.push(3); break
+            case "Sometimes": gp.push(2); break
+            case "Rarely": gp.push(1); break
+          }
+        }
+        if (!this.value || (this.itemName == "Award" && this.value == "None")) {
+          issues.show()
+          var text = [studentName, this.name].join(' - ')
+          $('<p>').text(text).appendTo(issues)
+          issues.children('summary').text(`Issues (${issues.children('p').length})`)
           if (!elements.hasClass('error')) elements.addClass('error').text("Incomplete")
           if (!staff.hasClass('error')) staff.addClass('error')
         }
       })
+      var gpa = gp.length ? (gp.reduce((a, b) => a + b) / gp.length).toFixed(2) : "NA"
+      $('<div>').text(gpa).appendTo(student)
+      if (gpa >= 3.5) {
+        if (!ex.includes(false) && ex.length) {
+          $('<div>').text("Excellence").addClass('complete').appendTo(student)
+        } else {
+          $('<div>').text("Endeavour").addClass('complete').appendTo(student)
+        }
+      } else {
+        $('<div>').appendTo(student)
+      }
     })
   }
 
@@ -271,10 +332,13 @@ $(document).ready(function() {
   }
   function loadTasks(tasks, entityId, userId, cycleId) {
     var activity = $(`#${cycleId}.cycle .${userId}.staff .${entityId}.activity .kats`)
-    var errors = activity.parent().parent()
-    var staff = errors.parent()
+    var metadata = activity.parent().parent()
+    var issues = $(`#${cycleId}.cycle .${userId}.staff .${entityId}.issues`)
+    var staff = metadata.parent()
     var message = function(kat, type, count, text) {
-      $('<p>').text(`KAT ${count}${text}`).appendTo(errors)
+      issues.show()
+      $('<p>').text(`KAT ${count}${text}`).appendTo(issues)
+      issues.children('summary').text(`Issues (${issues.children('p').length})`)
       if (!kat.hasClass(type)) kat.addClass(type)
       if (!staff.hasClass(type)) staff.addClass(type)
     }
@@ -286,28 +350,45 @@ $(document).ready(function() {
         if (!this.taskReportDescription) {
           message(kat, 'error', katCount, " has no description (edit Learning Task > Reporting and add Task Summary Description)")
         }
-        if (this.taskReportDescription.includes("\n\n")) {
-          message(kat, 'warning', katCount, " has extra text in description (edit Learning Task > Reporting and remove extra text from Task Summary Description)")
-        }
-        if (!(this.name.startsWith("Key Assessment Task") || this.name.startsWith("Unit") || this.name.startsWith("Exam") || this.name.startsWith("SAC"))) {
-          message(kat, 'warning', katCount, `: ${this.name} does not follow naming format (edit Learning Task and check Name)`)
-        }
         if (this.gradingItems && this.gradingItems.filter(grade => grade.includeInSemesterReport === true).length < 1) {
           message(kat, 'error', katCount, " grading components disabled (edit Learning Task > Reporting and check Components are ticked)")
-        }
-        if (this.securityOptions && this.securityOptions.filter(grade => grade.gradingVisible === false).length) {
-          message(kat, 'warning', katCount, " grading not visible (edit Learning Task > Basic and check Grading Visible is ticked)")
         }
         $.each(this.students, function() {
           if (!this.results) {
             message(kat, 'error', katCount, ` results missing for ${this.userName}`)
           }
         })
+        if (this.taskReportDescription.includes("\n\n")) {
+          message(kat, 'warning', katCount, " has extra text in description (edit Learning Task > Reporting and remove extra text from Task Summary Description)")
+        }
+        if (!(this.name.startsWith("Key Assessment Task") || this.name.startsWith("Unit") || this.name.startsWith("Exam") || this.name.startsWith("SAC") || this.name.startsWith("Semester") )) {
+          message(kat, 'warning', katCount, `: '${this.name}' does not follow naming format (edit Learning Task and check Name)`)
+        }
+        if (!(this.taskTitleOnReport.startsWith("Key Assessment Task") || this.taskTitleOnReport.startsWith("Unit") || this.taskTitleOnReport.startsWith("Exam") || this.taskTitleOnReport.startsWith("SAC") || this.taskTitleOnReport.startsWith("Semester") )) {
+          message(kat, 'warning', katCount, `: '${this.taskTitleOnReport}' does not follow naming format (edit Learning Task > Reporting and check Title on Report)`)
+        }
+        if (this.includeInOverall) {
+          message(kat, 'warning', katCount, `: ${this.name} is emphasised (edit Learning Task > Reporting and untick Emphasise in Task Summary)`)
+        }
+        if (this.showTaskDueDates) {
+          message(kat, 'warning', katCount, `: ${this.name} shows due date on report (edit Learning Task > Reporting and untick Display Task Due Dates)`)
+        }
+        if (this.securityOptions && this.securityOptions.filter(grade => grade.gradingVisible === false).length) {
+          message(kat, 'warning', katCount, " grading not visible (edit Learning Task > Basic and check Grading Visible is ticked)")
+        }
+        if (this.name.includes(" : ") || this.taskTitleOnReport.includes(" : ")) {
+          message(kat, 'info', katCount, " has incorrect colon use in name (edit Learning Task and remove space before colon)")
+        }
+        if (!this.dueDateTimestamp) {
+          message(kat, 'info', katCount, `: ${this.name} is missing due date (edit Learning Task and add Due Date)`)
+        }
       }
     })
     if (katCount < 3) {
-      $('<p>').text("Class has fewer than 3 KATs (edit Learning Tasks > Reporting and check Semester Report Cycles are added)").appendTo(errors)
+      issues.show()
+      $('<p>').text("Class has fewer than 3 KATs (edit Learning Tasks > Reporting and check Semester Report Cycles are added)").appendTo(issues)
       if (!staff.hasClass('warning')) staff.addClass('warning')
+      issues.children('summary').text(`Issues (${issues.children('p').length})`)
     }
   }
 })

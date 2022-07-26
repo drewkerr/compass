@@ -24,10 +24,15 @@ section:hover {
   box-shadow: 0 0 1rem 0 rgba(0,0,0,0.2);
 }
 h1,
+summary,
 a,
 a:visited {
   color: #06c;
   text-decoration: none;
+}
+summary {
+  font-weight: bold;
+  margin-bottom: 2rem;
 }
 h2 {
   margin: 0;
