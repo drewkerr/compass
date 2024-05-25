@@ -79,10 +79,13 @@ $(document).ready(function() {
   
   var studentList = [["First Name",
                       "Last Name",
-                      "Student ID",
                       "Class Name",
+                      "Class Year Level",
+                      "Subject",
                       "Teacher Name",
-                      "Email"]]
+                      "Class School Management ID",
+                      "Student ID",
+                      "Student Email"]]
 
   var teacherList = [["First Name",
                       "Last Name",
@@ -135,21 +138,25 @@ $(document).ready(function() {
     $('<tbody>').appendTo('#dash table')
     $.each(subjects.d.data, function() {
       tableRow([this.importIdentifier, this.shortName, this.yearLevelShortName]).appendTo('#dash table tbody')
-      getClass(this.id).done(loadClass)
-    })
-  }
-
-  var loadClass = function(group) {
-    $.each(group.d.data, function() {
-      var activityId = this.id
-      var classname = [this.name, this.subjectLongName].join(" - ")
-      getStaff(this.managerId).done(function(staff) {
-        loadStaff(staff, activityId, classname)
+      getClass(this.id).done(function(group) {
+        loadClass(group, this.yearLevelShortName)
       })
     })
   }
 
-  var loadStaff = function(staff, activityId, classname) {
+  var loadClass = function(group, classlevel) {
+    $.each(group.d.data, function() {
+      var activityId = this.id
+      var classname = [this.name, this.subjectLongName].join(" - ")
+      var classid = this.name
+      var subject = this.subjectLongName
+      getStaff(this.managerId).done(function(staff) {
+        loadStaff(staff, activityId, classname, classlevel, subject, classid)
+      })
+    })
+  }
+
+  var loadStaff = function(staff, activityId, classname, classlevel, subject, classid) {
     let fname = staff.d.userPreferredName
     let lname = staff.d.userFullName.split(" ")
     lname = lname[lname.length - 1]
@@ -161,18 +168,18 @@ $(document).ready(function() {
       teacherList.push(row)
     }
     getEnrolments(activityId).done(function(enrolments) {
-      loadEnrolments(enrolments, teacher, classname)
+      loadEnrolments(enrolments, teacher, classname, classlevel, subject, classid)
     })
   }
 
-  var loadEnrolments = function(enrolments, teacher, classname) {
+  var loadEnrolments = function(enrolments, teacher, classname, classlevel, subject, classid) {
     var students = enrolments.d.filter(function(student) {
       return student.pi
     })
     $.each(students, function() {
       var student = this.n.split(", ")
       var email = this.ii.toLowerCase() + "@crusoecollege.vic.edu.au"
-      var row = [student[1], student[0], this.ii, classname, teacher, email]
+      var row = [student[1], student[0], classname, classlevel, subject, teacher, classid, this.ii, email]
       studentList.push(row)
     })
   }
