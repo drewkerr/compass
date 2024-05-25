@@ -107,12 +107,14 @@ $('<div>').addClass('note')
 
 var headers = {
   'Name':'',
-  'Attendance':'Includes sessions present, late and approved absenses',
+  'Attendance':'Includes sessions present, late and approved absenses for this class',
+  'Total':'Includes sessions present, late and approved absenses for all classes',
   'Chronicle':'General Chronicle entries',
   'Contact':'Days since last recorded contact home',
   'Parent':'Days since last parent Compass login',
   'Student':'Days since last student Compass login',
   'Tasks':'Learning Tasks included in semester reports',
+  'Events':'School Events attended',
   'GPA':'Grade Point Average on latest progress report',
   'Growth':'GPA Growth from previous progress report',
   //'VC Growth':'Victorian Curriculum average growth to latest semester report (6 months = 0.5)'
@@ -129,7 +131,18 @@ function getStudents(startDate, endDate, activityId) {
       startDate:startDate,
       endDate:endDate,
       ActivityId:activityId,
-      studentStatus:1,inClass:[0,1],okClass:[0,1],vce:[0,1],schl:[0,1],perspective:0,totalWholeDayLimit:0,totalPartialDayLimit:0,}),
+      studentStatus:1,inClass:[0,1],okClass:[0,1],vce:[0,1],schl:[0,1],perspective:0,totalWholeDayLimit:0,totalPartialDayLimit:0}),
+    contentType:'application/json; charset=utf-8',
+    type:'POST'})
+}
+
+function getAttendance(userId) {
+  return $.ajax("/Services/Attendance.svc/GetAttendanceSummary"+"?_dc="+new Date().getTime(),{
+    data:JSON.stringify({
+      startDate:startDate,
+      endDate:endDate,
+      userId:userId,
+      studentStatus:1,inClass:[0,1],okClass:[0,1],vce:[0,1],schl:[0,1],perspective:0,totalWholeDayLimit:0,totalPartialDayLimit:0}),
     contentType:'application/json; charset=utf-8',
     type:'POST'})
 }
@@ -213,6 +226,7 @@ function getVCGrowth(cycleIds) {
 
 function loadStudents(students) {
   $('<tbody>').appendTo('#dash table')
+  students.d.sort((a, b) => a.uii.localeCompare(b.uii))
   $.each(students.d, function() {
     var user = this.uid
     userIds.push(user)
@@ -232,6 +246,7 @@ function loadStudents(students) {
       case (att < 95): el.addClass('yellow'); break;
       default: el.addClass('green'); break;
     }
+    getAttendance(user).done((classes) => loadAttendance(classes, user))
     getTasks(user).done(loadTasks)
     getGPA(user).done(loadGPA)
     getContacts(user).done(loadContacts)
@@ -241,6 +256,24 @@ function loadStudents(students) {
   //getVC(activityId).done(loadVC)
 }
 
+function loadAttendance(classes, user) {
+  var im = 0, npu = 0, ta = 0
+  $.each(classes.d, function() {
+    im += this.im
+    npu += this.npu
+    if (this.sn == "Events") ta = this.ta
+  })
+  var att = Math.round((im - npu) / im * 100)
+  var el = $('.dash'+user+' .total')
+  el.text(att + '%')
+  switch (true) {
+    case (att < 90): el.addClass('red'); break;
+    case (att < 95): el.addClass('yellow'); break;
+    default: el.addClass('green'); break;
+  }
+  $('.dash'+user+' .events').text(ta)
+}
+  
 function loadTasks(tasks) {
   var user = this.user
   var subs = {overdue:0, late:0, pending:0, ontime:0}
@@ -296,25 +329,31 @@ function loadGPA(cycles) {
 }
 
 function loadChronicle(chronicle) {
-  $.each(chronicle.d, function() {
-    if ([1,2,3,4,5,6,14].includes(this.categoryId)) {
-      if (this.counts) {
-        $.each(this.counts,function() {
-          var user = this.StudentId;
-          var el = $('.dash'+user+' .chronicle')
-          var count = parseInt(el.text())
-          if (!count) count = 0
-          el.text(count+this.Grey+this.Green+this.Amber+this.Red)
-          switch (true) {
-            case (this.Red > 0): el.addClass('red'); break;
-            case (this.Amber > 0): el.addClass('yellow'); break;
-            case (this.Green > 0): el.addClass('green');
-          }
-        })
+  $.get("/Services/ReferenceDataCache.svc/GetChronicleCategories", function(categories) {
+    $.each(chronicle.d, function() {
+      if ([1,2,3,4,5,6,14,18,20,22].includes(this.categoryId)) {
+        var name = categories.d.filter(c => c.id == this.categoryId)[0].name
+        if (this.counts) {
+          $.each(this.counts, function() {
+            var user = this.StudentId
+            var el = $('.dash'+user+' .chronicle')
+            var count = parseInt(el.text())
+            if (!count) count = 0
+            el.text(count+this.TotalPoints)
+            var subtotal = `${this.Grey + this.Green + this.Amber + this.Red} ${name}`
+            var title = el.prop('title')
+            el.prop('title', title + "\n" + subtotal)
+            switch (true) {
+              case (this.Red > 0): el.addClass('red'); break;
+              case (this.Amber > 0): el.addClass('yellow'); break;
+              case (this.Green > 0): el.addClass('green');
+            }
+          })
+        }
       }
-    }
+    })
+    $('.chronicle:empty').addClass('grey').text('0')
   })
-  $('.chronicle:empty').addClass('grey').text('0')
 }
 
 function loadContacts(contacts) {
@@ -368,8 +407,15 @@ function loadLogins(parents, students) {
     })
   }
 
-  var start = new Date(new Date().getFullYear(),0,1).toLocaleDateString('en-CA')
-  var finish = new Date().toLocaleDateString('en-CA')
+  function dateFormat(date) {
+    const day = date.getDate()
+    const month = date.getMonth() + 1
+    const year = date.getFullYear()
+    return `${year}-${month}-${day}`
+  }
+
+  var start = dateFormat(new Date(new Date().getFullYear(),0,1))
+  var finish = dateFormat(new Date())
   $.get("/Services/FileDownload/CsvRequestHandler?start="+start+"&finish="+finish+"&type=22", function(data) {
     var csv = parseCSV(data)
     var arr = arrayHash(csv)

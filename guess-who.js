@@ -25,24 +25,53 @@ $(`<div id="guess"><style type="text/css">
 	overflow: scroll;
 	-webkit-overflow-scrolling: touch;
 }
-.header {
+#guess .header {
 	display: flex;
 	align-items: flex-start;
 	margin: 1em;
 }
-#guess img {
+#guess .card {
+  display: inline-block;
 	margin: 0 0 1vw 1vw;
+  height: 14vw;
 	width: 11vw;
-	border-radius: 1vw;
+  perspective: 1000px;
 }
-.button {
+#guess .front, #guess .back {
+  position: relative;
+  backface-visibility: hidden;
+  border-radius: 0.5rem;
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+  box-shadow: 0 0 .125rem rgba(80,80,80,.14),0 .125rem .125rem rgba(80,80,80,.12),0 .125rem .1875rem rgba(80,80,80,.2);
+  transition: transform 0.5s ease;
+}
+#guess .card:hover .front {
+  transform: rotateY(-180deg);
+}
+#guess .card:hover .back {
+  transform: rotateY(0deg) translateY(-14vw);
+}
+#guess .front {
+  background-size: cover;
+  background-position: center;
+}
+#guess .back {
+  background-color: dodgerblue;
+  color: white;
+  text-align: center;
+  padding: 50% 0 0 0;
+  transform: rotateY(180deg) translateY(-14vw);
+}
+#guess .button {
 	margin-left: 1em;
 	padding: 0.5em 1em;
 	border-radius: 0.5em;
 	color: #666;
 	border: #666 1px solid;
 }
-.button:hover {
+#guess .button:hover {
 	background-color: #ccc;
 }
 </style></div>`).appendTo('body');
@@ -50,7 +79,7 @@ $('<div>').addClass('header').appendTo('#guess');
 $('<h1>').addClass('title').text('Guess Who?').appendTo('#guess .header');
 $('<div>').addClass('button').text('Reset')
   .click(function() {
-    $('#guess img').css('opacity', 1);
+    $('#guess .card').css('opacity', 1);
 }).appendTo('#guess .header');
 $('<div>').addClass('button').text('Close')
   .click(function() {
@@ -70,17 +99,17 @@ $.ajax("/Services/Attendance.svc/GetRollPackage",{
     } else {
       var src = url[0] + 'full' + url[1];
     }
-    $('<img>')
-      .attr('src', src)
-      .attr('title', this.n)
+    var card = $('<div>')
+      .addClass('card')
       .click(function() {
         if ($(this).css('opacity') == 1) {
           $(this).css('opacity', 0.1);
         } else {
           $(this).css('opacity', 1);
         }
-      })
-      .appendTo('#guess');
+      }).appendTo('#guess');
+    var front = $('<div>').addClass('front').css('background-image', `url(${src})`).appendTo(card);
+    var back = $('<div>').addClass('back').text(this.n).appendTo(card);
   });
 });
 });

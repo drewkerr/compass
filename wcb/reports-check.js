@@ -107,7 +107,7 @@ $(document).ready(function() {
     </style>
   </div>`).appendTo('body')
   $('<div>').addClass('header').appendTo('#dash')
-  $('<h1>').addClass('title').text('Reports Check').appendTo('#dash .header')
+  $('<h1>').addClass('title').text('Report Check').appendTo('#dash .header')
   var selectCycle = $('<select>').change(loadCycle).appendTo('#dash .header')
   if (Compass.organisationUserRoles.ReportsAdmin) {
     $('<div>').addClass('button').text('Expand all').click(function() {
@@ -127,12 +127,8 @@ $(document).ready(function() {
   $('<div>')
     .addClass('note')
     .css({ "flex-grow": "1", "order": "1" })
-    .html('👨🏻‍💻 Email Andrew Kerr for support')
+    .html('Email Trent Bysouth for support')
     .appendTo('#dash .header')
-  $('<div>')
-    .addClass('note')
-    .text('This tool checks reports for missing elements automatically. Click into colour-coded classes to see details of errors (red) or warnings (yellow) and how to fix them. Award recommendations are also listed here. Hover over tasks to see the full name. Click on class names to go directly and make changes. Completed reports (green) still require proofreading.')
-    .appendTo('#dash')
   
   getCycles().done(loadCycles)
 
@@ -246,33 +242,27 @@ $(document).ready(function() {
     var total = data.d.length
     var count = 0
     $.each(data.d, function() {
-      if (this.subjectName == "Advisory" || this.subjectName == "YDuties" || this.subjectName == "YDBUS") {
-        total--
-        return
+      if (this.subjectName != "YDuties" && this.subjectName != "YDBUS") {
+        var entityId = this.id
+        var activityId = this.activityId
+        var activity = $('<details>').addClass(`${entityId} activity`).appendTo(staff)
+        var summary = $('<summary>').appendTo(activity)
+        $('<div>').html(`<a href="/Organise/Activities/Activity.aspx#activity/${activityId}" target="_blank">${this.activityName} - ${this.subjectName}</a>`).appendTo(summary)
+        $('<div>').addClass('kats').appendTo(summary)
+        $('<div>').addClass('elements').appendTo(summary)
+        $.when(getReports(entityId, cycleId), getTasks(activityId))
+        .done(function(results, tasks) {
+          var issues = $('<details>').addClass(`${entityId} issues`).hide().appendTo(activity)
+          var summary = $('<summary>').text("Issues").appendTo(issues)
+          loadTasks(tasks[0], entityId, userId, cycleId)
+          loadReports(results[0], entityId, userId, cycleId)
+        }).done(function() {
+          if (!staff.hasClass('complete')) staff.addClass('complete')
+          count++
+          var percent = count / total * 100
+          progress.css({ background: `-webkit-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0) ${percent}%, white ${percent}%, white)` })
+        })
       }
-      //if (Compass.organisationUserRoles.ReportsAdmin && !(this.activityName.includes("VC") || this.activityName.slice(2,4) == "10")) {
-      //  total--
-      //  return
-      //}
-      var entityId = this.id
-      var activityId = this.activityId
-      var activity = $('<details>').addClass(`${entityId} activity`).appendTo(staff)
-      var summary = $('<summary>').appendTo(activity)
-      $('<div>').html(`<a href="/Organise/Activities/Activity.aspx#activity/${activityId}" target="_blank">${this.activityName} - ${this.subjectName}</a>`).appendTo(summary)
-      $('<div>').addClass('kats').appendTo(summary)
-      $('<div>').addClass('elements').appendTo(summary)
-      $.when(getReports(entityId, cycleId), getTasks(activityId))
-      .done(function(results, tasks) {
-        var issues = $('<details>').addClass(`${entityId} issues`).hide().appendTo(activity)
-        var summary = $('<summary>').text("Issues").appendTo(issues)
-        loadTasks(tasks[0], entityId, userId, cycleId)
-        loadReports(results[0], entityId, userId, cycleId)
-      }).done(function() {
-        if (!staff.hasClass('complete')) staff.addClass('complete')
-        count++
-        var percent = count / total * 100
-        progress.css({ background: `-webkit-linear-gradient(left, rgba(0,0,0,0), rgba(0,0,0,0) ${percent}%, white ${percent}%, white)` })
-      })
     })
   }
 
@@ -320,7 +310,7 @@ $(document).ready(function() {
       })
       var gpa = gp.length ? (gp.reduce((a, b) => a + b) / gp.length).toFixed(2) : "NA"
       $('<div>').text(gpa).appendTo(student)
-      if (gpa >= 3.75) {
+      if (gpa >= 3.5) {
         if (!ex.includes(false) && ex.length) {
           $('<div>').text("Excellence").addClass('complete').appendTo(student)
         } else {
@@ -347,7 +337,7 @@ $(document).ready(function() {
     var staff = metadata.parent()
     var message = function(kat, type, count, text) {
       issues.show()
-      $('<p>').text(`Task ${count}${text}`).appendTo(issues)
+      $('<p>').text(`KAT ${count}${text}`).appendTo(issues)
       issues.children('summary').text(`Issues (${issues.children('p').length})`)
       if (!kat.hasClass(type)) kat.addClass(type)
       if (!staff.hasClass(type)) staff.addClass(type)
@@ -356,7 +346,7 @@ $(document).ready(function() {
     $.each(tasks.d.data, function() {
       if (this.semesterReportCycles && this.semesterReportCycles.some(task => task.includeInSemesterReports === true && task.reportCycleId == cycleId)) {
         katCount++
-        var kat = $('<div>').text(`Task ${katCount}`).attr('title', this.name).addClass('complete').appendTo(activity)
+        var kat = $('<div>').text(`KAT ${katCount}`).attr('title', this.name).addClass('complete').appendTo(activity)
         if (!this.taskReportDescription) {
           message(kat, 'error', katCount, " has no description (edit Learning Task > Reporting and add Task Summary Description)")
         }
@@ -371,10 +361,10 @@ $(document).ready(function() {
         if (this.taskReportDescription.includes("\n\n")) {
           message(kat, 'warning', katCount, " has extra text in description (edit Learning Task > Reporting and remove extra text from Task Summary Description)")
         }
-        if (!(this.name.startsWith("Key Assessment Task") || this.name.startsWith("Unit") || this.name.startsWith("Exam") || this.name.startsWith("SAC") || this.name.startsWith("Semester") || this.name.startsWith("Structured") )) {
+        if (!( this.name.startsWith("1") || this.name.startsWith("2") || this.name.startsWith("3") )) {
           message(kat, 'warning', katCount, `: '${this.name}' does not follow naming format (edit Learning Task and check Name)`)
         }
-        if (!(this.taskTitleOnReport.startsWith("Key Assessment Task") || this.taskTitleOnReport.startsWith("Unit") || this.taskTitleOnReport.startsWith("Exam") || this.taskTitleOnReport.startsWith("SAC") || this.taskTitleOnReport.startsWith("Semester") || this.taskTitleOnReport.startsWith("Structured") )) {
+        if (!( this.taskTitleOnReport.startsWith("1") || this.taskTitleOnReport.startsWith("2") || this.taskTitleOnReport.startsWith("3") || this.taskTitleOnReport.startsWith("4") || this.taskTitleOnReport.startsWith("5") || this.taskTitleOnReport.startsWith("6") )) {
           message(kat, 'warning', katCount, `: '${this.taskTitleOnReport}' does not follow naming format (edit Learning Task > Reporting and check Title on Report)`)
         }
         if (this.includeInOverall) {
@@ -386,9 +376,6 @@ $(document).ready(function() {
         if (this.securityOptions && this.securityOptions.filter(grade => grade.gradingVisible === false).length) {
           message(kat, 'warning', katCount, " grading not visible (edit Learning Task > Basic and check Grading Visible is ticked)")
         }
-        if (this.name.includes(" : ") || this.taskTitleOnReport.includes(" : ")) {
-          message(kat, 'info', katCount, " has incorrect colon use in name (edit Learning Task and remove space before colon)")
-        }
         if (!this.dueDateTimestamp) {
           message(kat, 'info', katCount, `: ${this.name} is missing due date (edit Learning Task and add Due Date)`)
         }
@@ -396,7 +383,7 @@ $(document).ready(function() {
     })
     if (katCount < 3) {
       issues.show()
-      $('<p>').text("Class has fewer than 3 Tasks (edit Learning Tasks > Reporting and check Semester Report Cycles are added)").appendTo(issues)
+      $('<p>').text("Class has fewer than 3 KATs (edit Learning Tasks > Reporting and check Semester Report Cycles are added)").appendTo(issues)
       if (!staff.hasClass('warning')) staff.addClass('warning')
       issues.children('summary').text(`Issues (${issues.children('p').length})`)
     }
