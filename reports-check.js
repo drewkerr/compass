@@ -297,9 +297,10 @@ $(document).ready(function() {
       var gp = []
       var ex = []
       $.each(this.results, function() {
-        if (this.name == "Overall Assessment" || this.name == "Performance") {
-          $('<div>').text(this.displayValue).appendTo(student)
-          ex.push(this.displayValue == "Excellent" || parseInt(this.displayValue) >= 80)
+        if (this.name == "Overall Assessment" || this.name == "Performance" || this.name == "Grading: Achievement") {
+          var abbr = this.displayValue.match(/\b([A-Z])/g).join('')
+          $('<div>').text(abbr).appendTo(student)
+          ex.push(this.displayValue == "Working Well Above Expected Level" || this.displayValue == "Working Above Expected Level" || this.displayValue == "Working At Expected Level" || this.displayValue == "Excellent" || parseInt(this.displayValue) >= 50)
         }
         if (this.itemName == "Work Habits") {
           switch (this.value) {
