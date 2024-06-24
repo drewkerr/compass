@@ -208,7 +208,7 @@ $(document).ready(function() {
     users.d.sort(function compare(a, b) {
       return a.ln.localeCompare(b.ln) || a.fn.localeCompare(b.fn)
     })
-    users.d.length = 1 // for testing
+    //users.d.length = 1 // for testing
     $.each(users.d, function() {
       var userId = this.id
       var user = $('<details>').addClass(`${userId} staff`).appendTo(`#${cycleId}.cycle`)
@@ -334,7 +334,7 @@ $(document).ready(function() {
         $.each(this.results, function() {
           if (this.name == "Overall Assessment" || this.name == "Performance" || this.name == "Grading: Achievement") {
             var abbr = (this.displayValue.match(/\b([A-Z])/g) || [this.displayValue]).join('')
-            $('<div>').text(abbr).appendTo(student)
+            $('<div>').text(abbr).attr('title', this.displayValue).appendTo(student)
             ex.push(this.displayValue == "Working Well Above Expected Level" || this.displayValue == "Working Above Expected Level" || this.displayValue == "Working At Expected Level" || this.displayValue == "Excellent" || parseInt(this.displayValue) >= 50)
           }
           if (this.itemName == "Work Habits") {
@@ -356,7 +356,7 @@ $(document).ready(function() {
         })
         gp = gp.length ? gp : loadGPA(gpas, this.id) // if no Work Habits, load from Progress Report
         var gpa = gp.length ? (gp.reduce((a, b) => a + b) / gp.length).toFixed(2) : "NA"
-        $('<div>').text(gpa).appendTo(student)
+        $('<div>').text(gpa).attr('title', 'Grade Point Average').appendTo(student)
         if (gpa >= 3.75) {
           if (!ex.includes(false) && ex.length) {
             $('<div>').text("Excellence").addClass('complete').appendTo(student)
