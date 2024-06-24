@@ -135,6 +135,7 @@ $(document).ready(function() {
     .appendTo('#dash')
   
   getCycles().done(loadCycles)
+  getProgress().done(loadProgress)
 
   function getCycles() {
     return $.ajax("/Services/Reports.svc/GetCycles",{
@@ -146,6 +147,7 @@ $(document).ready(function() {
   function loadCycles(cycles) {
     $.each(cycles.d, function(i, n) {
       var option = $('<option>').attr('value', n.id)
+                                .attr('data-start', n.start)
                                 .text(n.name + ' ' + n.year)
                                 .appendTo(selectCycle)
       if (i == 0) {
@@ -153,6 +155,21 @@ $(document).ready(function() {
       }
     })
     selectCycle.change()
+  }
+  
+  function getProgress() {
+    return $.ajax("/Services/Gpa.svc/GetPublishedCycles",{
+      data: JSON.stringify({page: 1, start: 0, limit: 25}),
+      contentType: 'application/json',
+      type: 'POST'})
+  }
+  
+  function loadProgress(cycles) {
+    $.each(cycles.d, function(i, n) {
+      var start = new Date(n.start)
+      start = new Date(start - start.getTimezoneOffset() * -60 * 1000).toLocaleDateString("en-GB")
+      $(`#dash select option[data-start="${start}"]`).attr("data-progress", n.id)
+    })
   }
   
   function loadCycle() {
@@ -191,6 +208,7 @@ $(document).ready(function() {
     users.d.sort(function compare(a, b) {
       return a.ln.localeCompare(b.ln) || a.fn.localeCompare(b.fn)
     })
+    users.d.length = 1 // for testing
     $.each(users.d, function() {
       var userId = this.id
       var user = $('<details>').addClass(`${userId} staff`).appendTo(`#${cycleId}.cycle`)
@@ -266,7 +284,7 @@ $(document).ready(function() {
         var issues = $('<details>').addClass(`${entityId} issues`).hide().appendTo(activity)
         var summary = $('<summary>').text("Issues").appendTo(issues)
         loadTasks(tasks[0], entityId, userId, cycleId)
-        loadReports(results[0], entityId, userId, cycleId)
+        loadReports(results[0], activityId, entityId, userId, cycleId)
       }).done(function() {
         if (!staff.hasClass('complete')) staff.addClass('complete')
         count++
@@ -276,13 +294,28 @@ $(document).ready(function() {
     })
   }
 
+  function getGPA(entityId, cycleId) {
+    return $.ajax("/Services/Gpa.svc/GetResultsByCycleAndActivity",{
+      data: JSON.stringify({cycleId: cycleId, entityId: entityId, editing: true}),
+      contentType: 'application/json',
+      type: 'POST'})
+  }
+  function loadGPA(results, userId) {
+    return results.d.entities
+      .filter(s => s.id == userId)[0] // filter by user
+      .results.map(r => [r.result, results.d.aoas.filter(a => a.id == r.id)]) // [result, areas of assessment]
+      .map(a => a[1][0].options.filter(b => b.id == a[0])) // map result to area of assessment
+      .map(a => a[0].value) // map GP value
+      .filter(x => x) // filter out null
+  }
+  
   function getReports(entityId, cycleId) {
     return $.ajax("/Services/Reports.svc/GetReportReviewerBlob",{
       data: JSON.stringify({entityType: 1, entityId: entityId, cycleId: cycleId}),
       contentType: 'application/json',
       type: 'POST'})
   }
-  function loadReports(results, entityId, userId, cycleId) {
+  function loadReports(results, activityId, entityId, userId, cycleId) {
     var activity = $(`#${cycleId}.cycle .${userId}.staff .${entityId}.activity .elements`)
     var metadata = activity.parent().parent()
     var issues = $(`#${cycleId}.cycle .${userId}.staff .${entityId}.issues`)
@@ -290,46 +323,50 @@ $(document).ready(function() {
     var elements = $('<div>').text("Completed").addClass('complete').appendTo(activity)
     var excend = $('<details>').addClass(`${entityId} excend`).appendTo(metadata)
     var summary = $('<summary>').text("Excellence & Endeavour recommendations").appendTo(excend)
-    $.each(results.d.entities, function() {
-      var studentName = this.name
-      var student = $('<div>').appendTo(excend)
-      $('<div>').text(studentName).appendTo(student)
-      var gp = []
-      var ex = []
-      $.each(this.results, function() {
-        if (this.name == "Overall Assessment" || this.name == "Performance" || this.name == "Grading: Achievement") {
-          var abbr = this.displayValue.match(/\b([A-Z])/g).join('')
-          $('<div>').text(abbr).appendTo(student)
-          ex.push(this.displayValue == "Working Well Above Expected Level" || this.displayValue == "Working Above Expected Level" || this.displayValue == "Working At Expected Level" || this.displayValue == "Excellent" || parseInt(this.displayValue) >= 50)
-        }
-        if (this.itemName == "Work Habits") {
-          switch (this.value) {
-            case "Consistently": gp.push(4); break
-            case "Usually": gp.push(3); break
-            case "Sometimes": gp.push(2); break
-            case "Rarely": gp.push(1); break
+    var GPAcycleId = $(`#dash select option[value="${cycleId}"]`).attr("data-progress")
+    getGPA(activityId, GPAcycleId).done(function(gpas) {
+      $.each(results.d.entities, function() {
+        var studentName = this.name
+        var student = $('<div>').appendTo(excend)
+        $('<div>').text(studentName).appendTo(student)
+        var gp = []
+        var ex = []
+        $.each(this.results, function() {
+          if (this.name == "Overall Assessment" || this.name == "Performance" || this.name == "Grading: Achievement") {
+            var abbr = (this.displayValue.match(/\b([A-Z])/g) || [this.displayValue]).join('')
+            $('<div>').text(abbr).appendTo(student)
+            ex.push(this.displayValue == "Working Well Above Expected Level" || this.displayValue == "Working Above Expected Level" || this.displayValue == "Working At Expected Level" || this.displayValue == "Excellent" || parseInt(this.displayValue) >= 50)
           }
-        }
-        if (!this.value || (this.itemName == "Award" && this.value == "None")) {
-          issues.show()
-          var text = [studentName, this.name].join(' - ')
-          $('<p>').text(text).appendTo(issues)
-          issues.children('summary').text(`Issues (${issues.children('p').length})`)
-          if (!elements.hasClass('error')) elements.addClass('error').text("Incomplete")
-          if (!staff.hasClass('error')) staff.addClass('error')
+          if (this.itemName == "Work Habits") {
+            switch (this.value) {
+              case "Consistently": gp.push(4); break
+              case "Usually": gp.push(3); break
+              case "Sometimes": gp.push(2); break
+              case "Rarely": gp.push(1); break
+            }
+          }
+          if (!this.value || (this.itemName == "Award" && this.value == "None")) {
+            issues.show()
+            var text = [studentName, this.name].join(' - ')
+            $('<p>').text(text).appendTo(issues)
+            issues.children('summary').text(`Issues (${issues.children('p').length})`)
+            if (!elements.hasClass('error')) elements.addClass('error').text("Incomplete")
+            if (!staff.hasClass('error')) staff.addClass('error')
+          }
+        })
+        gp = gp.length ? gp : loadGPA(gpas, this.id) // if no Work Habits, load from Progress Report
+        var gpa = gp.length ? (gp.reduce((a, b) => a + b) / gp.length).toFixed(2) : "NA"
+        $('<div>').text(gpa).appendTo(student)
+        if (gpa >= 3.75) {
+          if (!ex.includes(false) && ex.length) {
+            $('<div>').text("Excellence").addClass('complete').appendTo(student)
+          } else {
+            $('<div>').text("Endeavour").addClass('complete').appendTo(student)
+          }
+        } else {
+          $('<div>').appendTo(student)
         }
       })
-      var gpa = gp.length ? (gp.reduce((a, b) => a + b) / gp.length).toFixed(2) : "NA"
-      $('<div>').text(gpa).appendTo(student)
-      if (gpa >= 3.75) {
-        if (!ex.includes(false) && ex.length) {
-          $('<div>').text("Excellence").addClass('complete').appendTo(student)
-        } else {
-          $('<div>').text("Endeavour").addClass('complete').appendTo(student)
-        }
-      } else {
-        $('<div>').appendTo(student)
-      }
     })
   }
 
