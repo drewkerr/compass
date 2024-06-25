@@ -331,12 +331,14 @@ $(document).ready(function() {
         $('<div>').text(studentName).appendTo(student)
         var gp = []
         var ex = []
+        var en = true
         $.each(this.results, function() {
           if (this.name == "Overall Assessment" || this.name == "Performance" || this.name == "Grading: Achievement") {
             var abbr = (this.displayValue.match(/\b([A-Z])/g) || [this.displayValue]).join('')
             $('<div>').text(abbr).attr('title', this.displayValue).appendTo(student)
             ex.push(this.displayValue == "Working Well Above Expected Level" || this.displayValue == "Working Above Expected Level" || this.displayValue == "Working At Expected Level" || this.displayValue == "Excellent" || parseInt(this.displayValue) >= 50)
           }
+          if (this.displayValue == "Not Assessed" || this.displayValue == "Not Submitted") en = false
           if (this.itemName == "Work Habits") {
             switch (this.value) {
               case "Consistently": gp.push(4); break
@@ -357,7 +359,7 @@ $(document).ready(function() {
         gp = gp.length ? gp : loadGPA(gpas, this.id) // if no Work Habits, load from Progress Report
         var gpa = gp.length ? (gp.reduce((a, b) => a + b) / gp.length).toFixed(2) : "NA"
         $('<div>').text(gpa).attr('title', 'Grade Point Average').appendTo(student)
-        if (gpa >= 3.75) {
+        if (gpa >= 3.75 && en) {
           if (!ex.includes(false) && ex.length) {
             $('<div>').text("Excellence").addClass('complete').appendTo(student)
           } else {
