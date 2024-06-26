@@ -296,7 +296,7 @@ $(document).ready(function() {
 
   function getGPA(entityId, cycleId) {
     return $.ajax("/Services/Gpa.svc/GetResultsByCycleAndActivity",{
-      data: JSON.stringify({cycleId: cycleId, entityId: entityId, editing: true}),
+      data: JSON.stringify({cycleId: cycleId, entityId: entityId, editing: false}),
       contentType: 'application/json',
       type: 'POST'})
   }
