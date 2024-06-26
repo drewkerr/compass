@@ -324,7 +324,7 @@ $(document).ready(function() {
     var excend = $('<details>').addClass(`${entityId} excend`).appendTo(metadata)
     var summary = $('<summary>').text("Excellence & Endeavour recommendations").appendTo(excend)
     var GPAcycleId = $(`#dash select option[value="${cycleId}"]`).attr("data-progress")
-    getGPA(activityId, GPAcycleId).done(function(gpas) {
+    getGPA(activityId, GPAcycleId).always(function(gpas) {
       $.each(results.d.entities, function() {
         var studentName = this.name
         var student = $('<div>').appendTo(excend)
