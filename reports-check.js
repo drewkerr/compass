@@ -301,12 +301,16 @@ $(document).ready(function() {
       type: 'POST'})
   }
   function loadGPA(results, userId) {
-    return results.d.entities
+    try {
+      return results.d.entities
       .filter(s => s.id == userId)[0] // filter by user
       .results.map(r => [r.result, results.d.aoas.filter(a => a.id == r.id)]) // [result, areas of assessment]
       .map(a => a[1][0].options.filter(b => b.id == a[0])) // map result to area of assessment
       .map(a => a[0].value) // map GP value
       .filter(x => x) // filter out null
+    } catch {
+      return false
+    }
   }
   
   function getReports(entityId, cycleId) {
