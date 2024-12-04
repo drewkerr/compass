@@ -136,6 +136,7 @@ $(document).ready(function() {
   
   getCycles().done(loadCycles)
   getProgress().done(loadProgress)
+  getOpenProgress().done(loadProgress)
 
   function getCycles() {
     return $.ajax("/Services/Reports.svc/GetCycles",{
@@ -163,7 +164,12 @@ $(document).ready(function() {
       contentType: 'application/json',
       type: 'POST'})
   }
-  
+  function getOpenProgress() {
+    return $.ajax("/Services/Gpa.svc/GetOpenCycles",{
+      data: JSON.stringify({page: 1, start: 0, limit: 25}),
+      contentType: 'application/json',
+      type: 'POST'})
+  }
   function loadProgress(cycles) {
     $.each(cycles.d, function(i, n) {
       var start = new Date(n.start)
@@ -208,7 +214,7 @@ $(document).ready(function() {
     users.d.sort(function compare(a, b) {
       return a.ln.localeCompare(b.ln) || a.fn.localeCompare(b.fn)
     })
-    //users.d.length = 1 // for testing
+    //users.d.length = 5 // for testing
     $.each(users.d, function() {
       var userId = this.id
       var user = $('<details>').addClass(`${userId} staff`).appendTo(`#${cycleId}.cycle`)
@@ -279,11 +285,12 @@ $(document).ready(function() {
       $('<div>').html(`<a href="/Organise/Activities/Activity.aspx#activity/${activityId}" target="_blank">${this.activityName} - ${this.subjectName}</a>`).appendTo(summary)
       $('<div>').addClass('kats').appendTo(summary)
       $('<div>').addClass('elements').appendTo(summary)
-      $.when(getReports(entityId, cycleId), getTasks(activityId))
-      .done(function(results, tasks) {
+      $.when(getReports(entityId, cycleId), getTasks(activityId), getEnrolments(activityId))
+      .done(function(results, tasks, enrolments) {
         var issues = $('<details>').addClass(`${entityId} issues`).hide().appendTo(activity)
         var summary = $('<summary>').text("Issues").appendTo(issues)
-        loadTasks(tasks[0], entityId, userId, cycleId)
+        var classlist = loadEnrolments(enrolments[0])
+        loadTasks(tasks[0], entityId, userId, cycleId, classlist)
         loadReports(results[0], activityId, entityId, userId, cycleId)
       }).done(function() {
         if (!staff.hasClass('complete')) staff.addClass('complete')
@@ -313,6 +320,17 @@ $(document).ready(function() {
     }
   }
   
+  function getEnrolments(activityId) {
+    return $.ajax("/Services/Activity.svc/GetEnrolmentsByActivityId",{
+      data: JSON.stringify({activityId: activityId, page:1,start:0,limit:100}),
+      contentType: 'application/json',
+      type: 'POST'})
+  }
+  function loadEnrolments(results) {
+    // TODO filter s.pi = true ?
+    return results.d.map(s => s.uid)
+  }
+  
   function getReports(entityId, cycleId) {
     return $.ajax("/Services/Reports.svc/GetReportReviewerBlob",{
       data: JSON.stringify({entityType: 1, entityId: entityId, cycleId: cycleId}),
@@ -340,7 +358,12 @@ $(document).ready(function() {
           if (this.name == "Overall Assessment" || this.name == "Performance" || this.name == "Grading: Achievement") {
             var abbr = (this.displayValue.match(/\b([A-Z])/g) || [this.displayValue]).join('')
             $('<div>').text(abbr).attr('title', this.displayValue).appendTo(student)
-            ex.push(this.displayValue == "Working Well Above Expected Level" || this.displayValue == "Working Above Expected Level" || this.displayValue == "Working At Expected Level" || this.displayValue == "Excellent" || parseInt(this.displayValue) >= 50)
+            ex.push(this.displayValue == "Working Well Above Expected Level" || 
+                    this.displayValue == "Working Above Expected Level" || 
+                    this.displayValue == "Working At Expected Level" || 
+                    this.displayValue == "Excellent" || 
+                    parseInt(this.displayValue) >= 50 || 
+                    (this.displayValue == "Absent" && this.itemName == "Semester Exam"))
           }
           if (this.displayValue == "Not Assessed" || this.displayValue == "Not Submitted") en = false
           if (this.itemName == "Work Habits") {
@@ -384,7 +407,7 @@ $(document).ready(function() {
       contentType: 'application/json',
       type: 'POST'})
   }
-  function loadTasks(tasks, entityId, userId, cycleId) {
+  function loadTasks(tasks, entityId, userId, cycleId, classlist) {
     var activity = $(`#${cycleId}.cycle .${userId}.staff .${entityId}.activity .kats`)
     var metadata = activity.parent().parent()
     var issues = $(`#${cycleId}.cycle .${userId}.staff .${entityId}.issues`)
@@ -408,7 +431,7 @@ $(document).ready(function() {
           message(kat, 'error', katCount, " grading components disabled (edit Learning Task > Reporting and check Components are ticked)")
         }
         $.each(this.students, function() {
-          if (!this.results.length) {
+          if (!this.results.length && classlist.includes(this.userId) ) {
             message(kat, 'error', katCount, ` results missing for ${this.userName}`)
           }
         })

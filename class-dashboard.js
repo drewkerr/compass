@@ -131,7 +131,7 @@ function getStudents(startDate, endDate, activityId) {
       startDate:startDate,
       endDate:endDate,
       ActivityId:activityId,
-      studentStatus:1,inClass:[0,1],okClass:[0,1],vce:[0,1],schl:[0,1],perspective:0,totalWholeDayLimit:0,totalPartialDayLimit:0}),
+      studentStatus:1,inClass:[0,1],"overall":["0","1"],okClass:[0,1],vce:[0,1],schl:[0,1],perspective:0,totalWholeDayLimit:0,totalPartialDayLimit:0}),
     contentType:'application/json; charset=utf-8',
     type:'POST'})
 }
