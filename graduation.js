@@ -201,13 +201,17 @@ $(document).ready(function() {
   }
 
   function loadSubjects(subjects, cycleId) {
-    let subjectId = subjects.d.filter(s => s.text == "AV102 Advisory")[0].value
-    getClasses(subjectId).done((classes) => loadClasses(classes, cycleId))
+    try {
+      let subjectId = subjects.d.filter(s => s.text == "AV102 Advisory")[0].value
+      getClasses(subjectId).done((classes) => loadClasses(classes, cycleId))
+    } catch {
+      $(`#c${cycleId}`).addClass('note').text("AV102 Advisory - subject not found.")
+    }
   }
 
   function getClasses(subjectId) {
     return $.ajax("/Services/Subjects.svc/GetStandardClassesOfSubject",{
-      data: JSON.stringify({subjectId: subjectId, page:1, start:0, limit:50}),
+      data: JSON.stringify({subjectId: subjectId, page:1, start:0, limit:50, sort:"[{\"property\":\"name\",\"direction\":\"ASC\"}]"}),
       contentType: 'application/json',
       type: 'POST'})
   }
@@ -218,8 +222,19 @@ $(document).ready(function() {
       $('<h3>').text(group).appendTo(`#c${cycleId}.cycle`)
       $('<div>').addClass(`g${group} group`).appendTo(`#c${cycleId}.cycle`)
       let activityId = this.id
-      getTasks(activityId).done((tasks) => loadTasks(tasks, cycleId))
+      $.when(getTasks(activityId), getEnrolments(activityId))
+      .done(function(tasks, enrolments) {
+        let classlist = enrolments[0].d.filter(s => s.pi || s.yln == "UNKNOWN").map(s => s.uid)
+        loadTasks(tasks[0], cycleId, classlist, group)
+      })
     })
+  }
+  
+  function getEnrolments(activityId) {
+    return $.ajax("/Services/Activity.svc/GetEnrolmentsByActivityId",{
+      data: JSON.stringify({activityId: activityId, page:1,start:0,limit:100}),
+      contentType: 'application/json',
+      type: 'POST'})
   }
   
   function getTasks(activityId) {
@@ -229,13 +244,14 @@ $(document).ready(function() {
       type: 'POST'})
   }
   
-  function loadTasks(tasks, cycleId) {
+  function loadTasks(tasks, cycleId, classlist, group) {
     let task = tasks.d.data.filter(t => t.name == "Year 10 Graduation Rubric")[0]
-    let group = task.groupName
-    let year = new Date(task.activityStart).getUTCFullYear()
+    let year = new Date(task.createdTimestamp).getUTCFullYear()
     let date = `December ${year}`
-    $.each(task.students, function() {
+    let students = task.students.filter(s => classlist.includes(s.userId))
+    $.each(students, function() {
       let userId = this.userId
+      console.log(userId,cycleId,group)
       let student = $('<div>').addClass(`s${userId} student`).appendTo(`#c${cycleId}.cycle .g${group}.group`)
       $(template).appendTo(`#c${cycleId}.cycle .s${userId}.student`)
       let name = this.userName.replace(/\s\(.*\)/, '')
