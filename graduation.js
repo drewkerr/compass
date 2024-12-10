@@ -216,6 +216,7 @@ $(document).ready(function() {
       type: 'POST'})
   }
 
+  var cohort = []
   function loadClasses(classes, cycleId) {
     $.each(classes.d.data, function() {
       let group = this.name
@@ -224,7 +225,8 @@ $(document).ready(function() {
       let activityId = this.id
       $.when(getTasks(activityId), getEnrolments(activityId))
       .done(function(tasks, enrolments) {
-        let classlist = enrolments[0].d.filter(s => s.pi || s.yln == "UNKNOWN").map(s => s.uid)
+        let classlist = enrolments[0].d.filter(s => !cohort.includes(s.uid)).map(s => s.uid)
+        cohort = [...cohort, ...classlist]
         loadTasks(tasks[0], cycleId, classlist, group)
       })
     })
@@ -251,7 +253,6 @@ $(document).ready(function() {
     let students = task.students.filter(s => classlist.includes(s.userId))
     $.each(students, function() {
       let userId = this.userId
-      console.log(userId,cycleId,group)
       let student = $('<div>').addClass(`s${userId} student`).appendTo(`#c${cycleId}.cycle .g${group}.group`)
       $(template).appendTo(`#c${cycleId}.cycle .s${userId}.student`)
       let name = this.userName.replace(/\s\(.*\)/, '')
