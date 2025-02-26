@@ -75,7 +75,7 @@ $(document).ready(function() {
   $('<div>').addClass('header').appendTo('#dash')
   $('<h1>').addClass('title').text('Unmarked Intelligent Rolls').appendTo('#dash .header')
   var today = new Date().toISOString().slice(0,10)
-  $('<input>').attr('type', 'date').attr('value', today).attr('max', today).change(function() {
+  $('<input>').addClass('date').attr('type', 'date').attr('value', today).attr('max', today).change(function() {
     $('#dash tbody').empty()
     $('#progress').attr('data-finished', 0)
     let date = $(this).attr('value')
@@ -133,8 +133,8 @@ $(document).ready(function() {
       type: 'POST'})
   }
 
-  function emailUser(user, activity) {
-    var subject = 'You have unmarked rolls in Compass: ' + activity
+  function emailUser(user, activity, date) {
+    var subject = `You have unmarked rolls in Compass: ${activity} (${date})`
     var body = 'https://' + user.d.userSchoolURL + '/Records/UserNew.aspx?#attendance'
     window.location.href = `mailto:${user.d.userEmail}?subject=${subject}&body=${body}`
   }
@@ -154,8 +154,10 @@ $(document).ready(function() {
       $('<td>').html(`<a href="/Organise/Activities/Activity.aspx#session/${roll.d.data.instanceId}">${roll.d.data.activityName}</a>`).appendTo(row)
       $('<td>').html(roll.d.data.tpString).appendTo(row)
       $('<td>').html($('<a>').text(roll.d.data.managerIi)).click(function(event) {
-          event.preventDefault()
-          getUser(roll.d.data.managerId).done((user) => emailUser(user, roll.d.data.activityName))
+        event.preventDefault()
+        let date = $('#dash .date').attr('value')
+        date = new Date(date).toLocaleDateString('en-AU')
+        getUser(roll.d.data.managerId).done((user) => emailUser(user, roll.d.data.activityName, date))
       }).appendTo(row)
     }
     updateProgress()
