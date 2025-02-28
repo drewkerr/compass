@@ -77,7 +77,7 @@ $(document).ready(function() {
         border: 0;
       }
       #dash .top td:first-child {
-        background-color: #fff391;
+        background-color: rgba(0, 102, 204, 0.2);
       }
     </style>
   </div>`).appendTo('body')
@@ -98,7 +98,7 @@ $(document).ready(function() {
   var headers = {
     'Group': '',
     'This Week': `${lastMonday.toLocaleDateString()} - ${endToday.toLocaleDateString()}`,
-    'Previous Weeks': `${startYear.toLocaleDateString()} - ${prevFriday.toLocaleDateString()}`
+    'Previous': `${startYear.toLocaleDateString()} - ${prevFriday.toLocaleDateString()}`
     }
   $.each(Object.keys(headers), function() {
     $('<th>').attr('title', headers[this]).text(this).appendTo('#dash thead tr')
@@ -135,7 +135,7 @@ $(document).ready(function() {
       Object.keys(last)
       .sort((a, b) => collator.compare(a, b))
       .forEach(function(v, i) {
-        let n = average(last[v])
+        let n = average(last[v]).toFixed(1)
         let row = $('<tr>')
         row.appendTo('#dash tbody')
         const checkTop = (i) => {
@@ -144,6 +144,8 @@ $(document).ready(function() {
           if (top[i] < n) {
             top[i] = n
             $(`#dash .${type[i]}`).removeClass('top')
+          }
+          if (top[i] <= n) {
             row.addClass('top')
           }
         }
@@ -157,14 +159,11 @@ $(document).ready(function() {
         } else {
           checkTop(2)
         }
-        n = n.toFixed(1)
         $('<td>').html(`<a href="${url}">${v}</a>`).appendTo(row)
-        let bg = 'background-color'
-        let rgba = `rgba(164, 218, 164, ${(n/100)**2})`
-        $('<td>').text(`${n}%`).css(bg, rgba).appendTo(row)
+        const hsla = (n) => `hsla(${120*(n/100)**2}, 80%, 80%, 0.8)`
+        $('<td>').text(`${n}%`).css('background-color', hsla(n)).appendTo(row)
         n = average(prev[v]).toFixed(1)
-        rgba = `rgba(164, 218, 164, ${(n/100)**2})`
-        $('<td>').text(`${n}%`).css(bg, rgba).appendTo(row)
+        $('<td>').text(`${n}%`).css('background-color', hsla(n)).appendTo(row)
       })
     })
   }
@@ -181,9 +180,7 @@ $(document).ready(function() {
   
   function loadAttendance(students, house, span) {
     // check object has key before push
-    const push = (o, k, v) => {
-      (o[k] || (o[k] = [])).push(parseInt(v))
-    }
+    const push = (o, k, v) => (o[k] || (o[k] = [])).push(parseInt(v))
     $.each(students.d, function() {
       push(span, house, this.spc)
       push(span, this.fg, this.spc)
