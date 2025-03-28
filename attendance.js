@@ -24,13 +24,13 @@ $(document).ready(function() {
         display: flex;
         align-items: center;
         margin: 1em;
+        gap: 1em;
       }
       #dash h1 {
         font: revert;
       }
       #dash .button {
         display: inline-block;
-        margin-left: 1em;
         padding: 0.5em 1em;
         border-radius: 0.5em;
         color: #666;
@@ -83,29 +83,42 @@ $(document).ready(function() {
   </div>`).appendTo('body')
   $('<div>').addClass('header').appendTo('#dash')
   $('<h1>').addClass('title').text('Attendance Summary').appendTo('#dash .header')
+  $('<label>').attr('for', 'date').text('Week ending').appendTo('#dash .header')
+  let today = new Date().toISOString().slice(0,10)
+  $('<input>').attr('id', 'date').attr('type', 'date').attr('value', today).attr('max', today)
+    .change(loadDate)
+    .appendTo('#dash .header')
+    .change()
   $('<div>').addClass('button').text('Close').click(function() {
     window.single = false
     $('#dash').remove()
   }).appendTo('#dash .header')
   
-  var d = new Date()
-  var startYear = new Date(d.getFullYear(), 0, 1)
-  var lastMonday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7)
-  var prevFriday = new Date(d.getFullYear(), d.getMonth(), lastMonday.getDate() - 3)
-  var endToday = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  var startYear
+  var lastMonday
+  var prevFriday
+  var endToday
+  function loadDate() {
+    $('#dash table').remove()
+    let d = new Date($(this).attr('value'))
+    startYear = new Date(d.getFullYear(), 0, 1)
+    lastMonday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7)
+    prevFriday = new Date(d.getFullYear(), d.getMonth(), lastMonday.getDate() - 3)
+    endToday = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+
+    $('<table>').append($('<thead>').append($('<tr>'))).appendTo('#dash')
+    var headers = {
+      'Group': '',
+      'This Week': `${lastMonday.toLocaleDateString()} - ${endToday.toLocaleDateString()}`,
+      'Previous': `${startYear.toLocaleDateString()} - ${prevFriday.toLocaleDateString()}`
+      }
+    $.each(Object.keys(headers), function() {
+      $('<th>').attr('title', headers[this]).text(this).appendTo('#dash thead tr')
+    })
+    $('<tbody>').appendTo('#dash table')
+    getHouses().done(loadHouses)
+  }
   
-  $('<table>').append($('<thead>').append($('<tr>'))).appendTo('#dash')
-  var headers = {
-    'Group': '',
-    'This Week': `${lastMonday.toLocaleDateString()} - ${endToday.toLocaleDateString()}`,
-    'Previous': `${startYear.toLocaleDateString()} - ${prevFriday.toLocaleDateString()}`
-    }
-  $.each(Object.keys(headers), function() {
-    $('<th>').attr('title', headers[this]).text(this).appendTo('#dash thead tr')
-  })
-  $('<tbody>').appendTo('#dash table')
-  
-  getHouses().done(loadHouses)
   function getHouses() {
     return $.ajax("/Services/User.svc/GetStudentHouses",{
       data: JSON.stringify({includeInternal:true,includeExternal:false,page:1,start:0,limit:25}),
