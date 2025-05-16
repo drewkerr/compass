@@ -115,6 +115,14 @@ $(document).ready(function() {
     .appendTo('#dash .header')
     .change() // run on start
   
+  // export CSV
+  $('<div>').addClass('button').text('Export').click(function() {
+    const rows = [...document.querySelectorAll('#dash table tr')]
+      .filter(el => el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0) // visible
+      .map(r => [...r.querySelectorAll('td, th')].map(td => td.textContent))
+    downloadCSV(rows, 'attendance.csv')
+  }).appendTo('#dash .header')
+  
   // close button
   $('<div>').addClass('button').text('Close').click(function() {
     window.single = false
@@ -259,6 +267,18 @@ $(document).ready(function() {
     $.each(classes.d.data, function() {
       $(`#dash .${this.id}`).addClass('custom')
     })
+  }
+  
+  var downloadCSV = function(rows, filename) {
+    const csv = rows.map(e => e.join(",\t")).join("\n") // comma + tab to work around Excel import
+    const blob = new Blob([csv], {type:"text/csv"})
+    const link = document.createElement("a")
+    link.download = filename
+    link.href = window.URL.createObjectURL(blob)
+    link.style.display = "none"
+    document.body.append(link)
+    link.click()
+    link.remove()
   }
   
 })
