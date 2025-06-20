@@ -41,10 +41,16 @@ $(document).ready(function() {
       #dash .button:hover {
         background-color: #ccc;
       }
+      #dash input[type="checkbox"] {
+        margin-left: 1em;
+      }
       #dash #custom {
         margin-left: 1em;
       }
       #dash #custom:not(:checked) ~ table .custom {
+        display: none;
+      }
+      #dash #forecast:not(:checked) ~ table .forecast {
         display: none;
       }
       #dash table {
@@ -100,6 +106,10 @@ $(document).ready(function() {
   // optionally hide custom classes
   $('<input>').attr('id', 'custom').attr('type', 'checkbox').appendTo('#dash')
   $('<label>').attr('for', 'custom').text('Custom classes').appendTo('#dash')
+
+  // optionally forecast attendance
+  $('<input>').attr('id', 'forecast').attr('type', 'checkbox').appendTo('#dash')
+  $('<label>').attr('for', 'forecast').text('Forecast attendance').appendTo('#dash')
   
   // date picker for start - through today
   let dates
@@ -175,14 +185,27 @@ $(document).ready(function() {
 
     // get and load attendance data for each date
     let deferred = []
+    let forecast
     for (const date of dates) {
-      deferred.push(
-        getAttendance(date).done((att) => loadAttendance(att, date))
-      )
+      // forecast attendance for today
+      if (dates.indexOf(date) == 0) {
+        deferred.push(
+          getAttendance(date).done((att) => {
+            forecast = att
+            loadAttendance(att, date)
+          })
+        )
+      } else {
+        deferred.push(
+          getAttendance(date).done((att) => loadAttendance(att, date))
+        )
+      }
     }
     $.when(...deferred).done(e => {
       th.click() // sort once complete
-      getCustom().done(loadCustom)
+      getCustom().done(loadCustom) // hide custom classes
+      let date = new Date(endToday)
+      getForecast(date).done((stu) => loadForecast(stu, forecast)) // after loading attendance but before filtering
     })
   }
   
@@ -198,13 +221,16 @@ $(document).ready(function() {
       type: 'POST'})
   }
 
+  // check object has key before push
+  const push = (o, k, v) => (o[k] || (o[k] = [])).push(parseInt(v))
+  // fraction of array as string
+  const fraction = array => `${array.reduce((a, b) => a + b)}/${array.length}`
+  // average of array
+  const average = array => array.reduce((a, b) => a + b) / array.length
+  // percentage to red-green colour range
+  const hsla = (n) => `hsla(${120*n}, 80%, 80%, 0.8)`
+
   function loadAttendance(att, date) {
-    // check object has key before push
-    const push = (o, k, v) => (o[k] || (o[k] = [])).push(parseInt(v))
-    // fraction of array as string
-    const fraction = array => `${array.reduce((a, b) => a + b)}/${array.length}`
-    // average of array
-    const average = array => array.reduce((a, b) => a + b) / array.length
     const ymd = date.toISOString().substring(0, 10)
 
     // loop over data to create classes = { name: [attendance] }
@@ -233,7 +259,6 @@ $(document).ready(function() {
         }
       }
       // add class data by date
-      const hsla = (n) => `hsla(${120*n}, 80%, 80%, 0.8)`
       const ddmm = `${date.getDate()}/${date.getMonth() + 1}`
       $(`#dash .${id} .${ymd}`).attr('title', ddmm).attr('data-percent', a*100).text(f).css('background-color', hsla(a))
       // optionally hide single student classes
@@ -243,7 +268,7 @@ $(document).ready(function() {
   
   function getCustom() {
     return $.ajax("/Services/Subjects.svc/GetSubjectsInAcademicGroup",{
-      data: JSON.stringify({academicGroupId:-1,includeDataSyncSubjects:true,page:1,start:0,limit:50,sort:"[{\"property\":\"layerName\",\"direction\":\"ASC\"}]"}),
+      data: JSON.stringify({academicGroupId:-1,includeDataSyncSubjects:true,page:1,start:0,limit:200,sort:"[{\"property\":\"layerName\",\"direction\":\"ASC\"}]"}),
       contentType: 'application/json',
       type: 'POST'})
   }
@@ -266,6 +291,42 @@ $(document).ready(function() {
   function loadClasses(classes) {
     $.each(classes.d.data, function() {
       $(`#dash .${this.id}`).addClass('custom')
+    })
+  }
+  
+  function getForecast(date) {
+    return $.ajax("/Services/AttendanceV2.svc/GetStudentDailySummaries",{
+      data: JSON.stringify({date: date,status:1,customGroupId:"all",byFilterClick:false,yearLevel:null,formGroupId:"",house:null,campus:null,initialStudentIds:null,page:1,start:0,limit:1000}),
+      contentType: 'application/json',
+      type: 'POST'})
+  }
+
+  function loadForecast(students, att) {
+    // add column
+    $('#dash').find('tr').each(function() {
+      $(this).find('th').eq(0).after($('<th class="forecast">Forecast</th>').click(sortTable))
+      $(this).find('td').eq(0).after('<td class="forecast"></td>')
+    })
+    // get students present in first session
+    let present = []
+    $.each(students.d.data, function() {
+      let status = this.userTimeLinePeriods[0].status
+      if (status == 1 || status == 4) {
+        present.push(this.userId)
+      }
+    })
+    // loop over data to create classes = { name: [attendance] }
+    let classes = {}
+    $.each(att.d, function() {
+      let f = present.includes(this.uid) ? 1 : 0 // present in first session
+      push(classes, this.an, f)
+    })
+    // add to table
+    Object.keys(classes).forEach(function(v, i) {
+      let a = average(classes[v])
+      let f = fraction(classes[v])
+      let id = att.d.find(obj => obj['an'] === v)['aid'].toString()
+      $(`#dash .${id} .forecast`).attr('data-percent', a*100).text(f).css('background-color', hsla(a))
     })
   }
   

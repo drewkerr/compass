@@ -62,6 +62,14 @@ $(document).ready(function() {
         padding: 1em;
         border: 0;
       }
+      #dash th.asc:after {
+        content: '▲';
+        position: absolute;
+      }
+      #dash th.dsc:after {
+        content: '▼';
+        position: absolute;
+      }
       #progress {
         position: fixed;
         bottom: 0;
@@ -87,10 +95,33 @@ $(document).ready(function() {
   }).appendTo('#dash .header')
   $('<div>').attr('id', 'progress').appendTo('#dash')
   
+  // https://stackoverflow.com/questions/14267781/sorting-html-table-with-javascript
+  const getCellValue = (tr, idx) =>
+    tr.children[idx].dataset.percent || tr.children[idx].innerText
+  const comparer = (idx, asc) =>
+    (a, b) => (
+      (v1, v2) => v1.localeCompare(v2, undefined, {numeric: true, sensitivity: "base"})
+    ) (getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx))
+  function sortTable(th) {
+    th = th.target
+    const tb = th.closest('table').tBodies[0]
+    Array.from(tb.querySelectorAll('tr'))
+      .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+      .forEach(tr => tb.appendChild(tr) )
+    // show sort direction arrows
+    $('#dash .asc').removeClass('asc')
+    $('#dash .dsc').removeClass('dsc')
+    if (this.asc) {
+      $(this).addClass('asc')
+    } else {
+      $(this).addClass('dsc')
+    }
+  }
+  
   $('<table>').append($('<thead>').append($('<tr>'))).appendTo('#dash')
   var headers = ['Activity', 'Time', 'Staff']
   $.each(headers, function() {
-    $('<th>').text(this).appendTo('#dash thead tr')
+    $('<th>').text(this).click(sortTable).appendTo('#dash thead tr')
   })
   $('<tbody>').appendTo('#dash table')
 
@@ -147,7 +178,6 @@ $(document).ready(function() {
   }
   
   function loadRoll(roll) {
-    console.log(roll.d.data.previousMarkings.length, roll.d.data.rollData.length)
     if (!roll.d.data.previousMarkings.length && roll.d.data.rollData.length) {
       let row = $('<tr>')
       row.appendTo('#dash tbody')
@@ -162,5 +192,5 @@ $(document).ready(function() {
     }
     updateProgress()
   }
-  
+
 })
