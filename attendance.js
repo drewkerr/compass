@@ -109,8 +109,8 @@ $(document).ready(function() {
     $('<table>').append($('<thead>').append($('<tr>'))).appendTo('#dash')
     var headers = {
       'Group': '',
-      'This Week': `${lastMonday.toLocaleDateString()} - ${endToday.toLocaleDateString()}`,
-      'Previous': `${startYear.toLocaleDateString()} - ${prevFriday.toLocaleDateString()}`
+      'Previous': `${startYear.toLocaleDateString()} - ${prevFriday.toLocaleDateString()}`,
+      'This Week': `${lastMonday.toLocaleDateString()} - ${endToday.toLocaleDateString()}`
       }
     $.each(Object.keys(headers), function() {
       $('<th>').attr('title', headers[this]).text(this).appendTo('#dash thead tr')
@@ -174,8 +174,8 @@ $(document).ready(function() {
         }
         $('<td>').html(`<a href="${url}">${v}</a>`).appendTo(row)
         const hsla = (n) => `hsla(${120*(n/100)**2}, 80%, 80%, 0.8)`
-        $('<td>').text(`${n}%`).css('background-color', hsla(n)).appendTo(row)
-        n = average(prev[v]).toFixed(1)
+        let p = average(prev[v]).toFixed(1)
+        $('<td>').text(`${p}%`).css('background-color', hsla(p)).appendTo(row)
         $('<td>').text(`${n}%`).css('background-color', hsla(n)).appendTo(row)
       })
     })
