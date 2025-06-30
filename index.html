@@ -3,10 +3,145 @@
 <head>
   <meta charset="utf-8">
   <title>Compass Power Tools</title>
-  <link rel="stylesheet" href="/style.css">
-  <script src="/script.js"></script>
+<style type="text/css">
+body {
+  font-family: sans-serif;
+  line-height: 1;
+  margin: 1rem auto 0;
+  padding: 1rem;
+  max-width: 40rem;
+  background-color: #f0f2f5;
+}
+p {
+  line-height: 1.5;
+}
+header {
+  display: flex;
+  align-items: center;
+}
+section {
+  margin: 2rem 0;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 0 0.5rem 0 rgba(0,0,0,0.2);
+  transition: box-shadow 0.2s ease;
+}
+section:hover {
+  box-shadow: 0 0 1rem 0 rgba(0,0,0,0.2);
+}
+h1,
+summary,
+a,
+a:visited {
+  color: #06c;
+  text-decoration: none;
+}
+summary {
+  font-weight: bold;
+  margin-bottom: 2rem;
+}
+h2 {
+  margin: 0;
+  padding: 1rem;
+  color: #036;
+}
+.hero {
+  position: relative;
+  max-height: 12rem;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+}
+.hero img {
+  width: 100%;
+}
+section p {
+  margin: 0;
+  padding: 1rem;
+}
+.button {
+  display: inline-block;
+  position: relative;
+  margin: 0 1rem 1rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background-color: #06c;
+  border: #06c 2px solid;
+  color: white;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+.button:hover {
+  background-color: white;
+  color: #06c;
+}
+code,
+kbd {
+  font-family: sans-serif;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+code {
+  background-color: #06c;
+  color: white;
+}
+kbd {
+  background-color: #eee;
+  color: #333;
+}
+footer {
+  color: #666;
+}
+@media (min-width: 800px) {
+  header {
+    margin-left: -3rem;
+  }
+  .button:before {
+    content: '↑ Drag the button to your Bookmarks Bar to use in Compass.';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    padding: 0 1rem;
+    background-color: #06c;
+    color: white;
+    text-align: center;
+    line-height: 1.5;
+    height: 0;
+    transition: height 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden;
+  }
+  .button:hover:before {
+    height: 1.5rem;
+    box-shadow: 0 0 1rem 0 rgba(0,0,0,0.2);
+  }
+  .button:after {
+    content: '← drag to your bookmarks';
+    position: absolute;
+    width: 12rem;
+    left: 2rem;
+    margin-left: 100%;
+    transition: left 0.2s ease;
+    color: #06c;
+  }
+  .button:hover:after {
+    left: 1rem;
+  }
+}
+</style>
+<script type="text/javascript">
+document.addEventListener('DOMContentLoaded', event => { 
+  var buttons = document.querySelectorAll('.button')
+  Array.from(buttons).forEach(button => {
+    button.addEventListener('click', event => {
+      event.preventDefault()
+      alert("Drag the button to your Bookmarks Bar to use in Compass.")
+    })
+  })
+})
+</script>
 </head>
-<body onload="check();">
+<body>
   <header>
     <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 200 200" width="48px" height="48px">
       <defs>
@@ -26,84 +161,84 @@
   <section>
     <div class="hero">
       <h2>Class Dashboard</h2>
-      <img src="https://cdn.glitch.com/2fe33dc2-b8a2-4316-84b6-b18d9b7e14ea%2Fclass-dashboard.png?v=1596947812372"/>
+      <img src="class-dashboard.png"/>
     </div>
     <p>View summary data about a class.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/class-dashboard.js';})();" class="button">Class Dashboard</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/class-dashboard.js';})();" class="button">Class Dashboard</a>
   </section>
   <section>
     <div class="hero">
       <h2>Reports Check</h2>
-      <img src="https://cdn.glitch.com/2fe33dc2-b8a2-4316-84b6-b18d9b7e14ea%2Freports-check.png?v=1596957497273"/>
+      <img src="reports-check.png"/>
     </div>
     <p>Check reports for missing elements automatically.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/reports-check.js';})();" class="button">Reports Check</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/reports-check.js';})();" class="button">Reports Check</a>
   </section>
   <section>
     <div class="hero">
       <h2>Classroom Mixer-upper-er</h2>
-      <img src="https://cdn.glitch.com/2fe33dc2-b8a2-4316-84b6-b18d9b7e14ea%2Fmixer-upper-er.png?v=1596947812595"/>
+      <img src="mixer-upper-er.png"/>
     </div>
     <p>Automate class groupings. Based on the work of Peter Cox (2009).</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/mixer-upper-er.js';})();" class="button">Mixer-upper-er</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/mixer-upper-er.js';})();" class="button">Mixer-upper-er</a>
   </section>
   <section>
     <div class="hero">
       <h2>Guess Who?</h2>
-      <img src="https://cdn.glitch.com/2fe33dc2-b8a2-4316-84b6-b18d9b7e14ea%2Fguess-who.png?v=1596957466752"/>
+      <img src="guess-who.png"/>
     </div>
     <p>Play a game of <em>Guess Who?</em> with a class.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/guess-who.js';})();" class="button">Guess Who?</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/guess-who.js';})();" class="button">Guess Who?</a>
   </section>
   <section>
     <div class="hero">
       <h2>Birthdays</h2>
-      <img src="https://cdn.glitch.com/2fe33dc2-b8a2-4316-84b6-b18d9b7e14ea%2Fbirthdays.png?v=1596947812098"/>
+      <img src="birthdays.png"/>
     </div>
     <p>Lists all the birthdays on a given day and plots the number per day for the year.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/birthdays.js';})();" class="button">Birthdays</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/birthdays.js';})();" class="button">Birthdays</a>
   </section>
   <section>
     <div class="hero">
       <h2>Lesson Plan Presenter</h2>
     </div>
     <p><b>In testing!</b> Toggles zooming the current lesson plan to fill the window for presenting.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/lesson-presenter.js';})();" class="button">Lesson Presenter</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/lesson-presenter.js';})();" class="button">Lesson Presenter</a>
   </section>
   <section>
     <div class="hero">
       <h2>Attendance Summary</h2>
     </div>
     <p><b>In testing!</b> Calculate school approved attendance %, by form/year/house, for this week compared to the year to date.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/attendance.js';})();" class="button">Attendance Summary</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/attendance.js';})();" class="button">Attendance Summary</a>
   </section>
   <section>
     <div class="hero">
       <h2>Attendance by Class</h2>
     </div>
     <p><b>In testing!</b> Show class attendance per day.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/attendance-class.js';})();" class="button">Attendance by Class</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/attendance-class.js';})();" class="button">Attendance by Class</a>
   </section>
   <section>
     <div class="hero">
       <h2>Unmarked Rolls</h2>
     </div>
     <p><b>In testing!</b> Find any unmarked rolls even when intelligent marking is used.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/unmarked.js';})();" class="button">Unmarked Rolls</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/unmarked.js';})();" class="button">Unmarked Rolls</a>
   </section>
   <section>
     <div class="hero">
       <h2>Certificate Creator</h2>
     </div>
     <p><b>In testing!</b> Create excellence and endeavour certificates for a report cycle.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/certificates.js';})();" class="button">Certificate Creator</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/certificates.js';})();" class="button">Certificate Creator</a>
   </section>
   <section>
     <div class="hero">
       <h2>Graduation Certificates</h2>
     </div>
     <p><b>In testing!</b> Create graduation certificates based on the Crusoe Year 10 Graduation Rubric.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/graduation.js';})();" class="button">Graduation Certificates</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/graduation.js';})();" class="button">Graduation Certificates</a>
   </section>
   <details>
     <summary>Experimental Tools</summary>
@@ -112,46 +247,46 @@
       <h2>Class List Export</h2>
     </div>
     <p><b>In testing!</b> Export all enrolments as CSV for <a href="https://help.educationperfect.com/article/56-how-do-i-enrol-my-classes">Education Perfect</a>.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/class-export-csv.js';})();" class="button">Class List Export</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/class-export-csv.js';})();" class="button">Class List Export</a>
   </section>
   <section>
     <div class="hero">
       <h2>Class List PDF</h2>
     </div>
     <p><b>In testing!</b> Create a class list PDF.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/class-list.js';})();" class="button">Class List PDF</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/class-list.js';})();" class="button">Class List PDF</a>
   </section>
   <section>
     <div class="hero">
       <h2>Lesson Plan/Teacher Notes Export</h2>
     </div>
     <p><b>In testing!</b> View all plans/notes for a class for export.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/notes-export.js';})();" class="button">Notes Export</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/notes-export.js';})();" class="button">Notes Export</a>
   </section>
   <section>
     <div class="hero">
       <h2>Reports Curriculum Coverage</h2>
     </div>
     <p><b>In testing!</b> Check which Victorian Curriculum strands are reported by which subjects.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/reports-vc-strand-coverage.js';})();" class="button">Reports Curriculum Coverage</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/reports-vc-strand-coverage.js';})();" class="button">Reports Curriculum Coverage</a>
   </section>
   <section>
     <div class="hero">
       <h2>Transpose Rubrics</h2>
     </div>
     <p><b>In testing!</b> Transposes rubric grading components from horizontal to vertical, with criteria in columns.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/transpose.js';})();" class="button">Transpose Rubrics</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/transpose.js';})();" class="button">Transpose Rubrics</a>
   </section>
   <section>
     <div class="hero">
       <h2>Pivot Data</h2>
     </div>
     <p><b>In testing!</b> View data in a pivot table or graph.</p>
-    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.glitch.me/pivot.js';})();" class="button">Pivot Data</a>
+    <a href="javascript:(function(){document.body.appendChild(document.createElement('script')).src='https://compass.learnding.au/pivot.js';})();" class="button">Pivot Data</a>
   </section>
   </details>
   <footer>
-    <p>👨🏻‍💻 By Andrew Kerr. 🎏 Made with <a href="https://glitch.com">Glitch</a>. 🐙 Code on <a href="https://github.com/drewkerr/compass">GitHub</a>. MIT License.</p>
+    <p>👨🏻‍💻 By Andrew Kerr. 🐙 Code on <a href="https://github.com/drewkerr/compass">GitHub</a>. MIT License.</p>
   </footer>
 </body>
 </html>
