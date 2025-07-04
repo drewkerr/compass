@@ -129,7 +129,7 @@ $(document).ready(function() {
     $('<table>').append($('<thead>').append($('<tr>'))).appendTo('#dash')
     var headers = {
       'Group': '',
-      'This Year': `${startYear.toLocaleDateString()} - ${prevFriday.toLocaleDateString()}`,
+      'This Year': `${startYear.toLocaleDateString()} - ${endToday.toLocaleDateString()}`,
       'This Term': `${startTerm.toLocaleDateString()} - ${endToday.toLocaleDateString()}`,
       'This Week': `${lastMonday.toLocaleDateString()} - ${endToday.toLocaleDateString()}`
       }
@@ -157,7 +157,7 @@ $(document).ready(function() {
     $.each(houses.d, function() {
       let house = this.id
       deferred.push(
-        getAttendance(house, startYear.toISOString(), lastMonday.toISOString())
+        getAttendance(house, startYear.toISOString(), endToday.toISOString())
         .done((students) => loadAttendance(students, house, year)),
         getAttendance(house, startTerm.toISOString(), endToday.toISOString())
         .done((students) => loadAttendance(students, house, term)),
