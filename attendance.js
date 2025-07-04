@@ -95,6 +95,7 @@ $(document).ready(function() {
   }).appendTo('#dash .header')
   
   var startYear
+  var startTerm
   var lastMonday
   var prevFriday
   var endToday
@@ -103,13 +104,33 @@ $(document).ready(function() {
     let d = new Date($(this).attr('value'))
     startYear = new Date(d.getFullYear(), 0, 1)
     lastMonday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - (d.getDay() + 6) % 7)
-    prevFriday = new Date(d.getFullYear(), d.getMonth(), lastMonday.getDate() - 3)
+    prevFriday = new Date(lastMonday.getFullYear(), lastMonday.getMonth(), lastMonday.getDate() - 3)
     endToday = new Date(d.getFullYear(), d.getMonth(), d.getDate())
-
+    getTerms().done(loadTerms)
+  }
+  
+  function getTerms() {
+    return $.ajax(`/Services/ReferenceData.svc/GetAllTermsForSchoolYear?year=${startYear.getFullYear()}&page=1&start=0&limit=25`)
+  }
+  
+  function loadTerms(terms) {
+    function parseDate(dmy) {
+      const [day, month, year] = dmy.split('/').map(Number)
+      return new Date(year, month - 1, day)
+    }
+    const now = new Date()
+    const currentTerm = terms.d.find((term, index, arr) => {
+      const start = parseDate(term.s)
+      const nextTerm = arr[index + 1]
+      const nextStart = nextTerm ? parseDate(nextTerm.s) : null
+      return start <= now && (!nextStart || now < nextStart);
+    })
+    startTerm = parseDate(currentTerm.s)
     $('<table>').append($('<thead>').append($('<tr>'))).appendTo('#dash')
     var headers = {
       'Group': '',
-      'Previous': `${startYear.toLocaleDateString()} - ${prevFriday.toLocaleDateString()}`,
+      'This Year': `${startYear.toLocaleDateString()} - ${prevFriday.toLocaleDateString()}`,
+      'This Term': `${startTerm.toLocaleDateString()} - ${endToday.toLocaleDateString()}`,
       'This Week': `${lastMonday.toLocaleDateString()} - ${endToday.toLocaleDateString()}`
       }
     $.each(Object.keys(headers), function() {
@@ -129,26 +150,29 @@ $(document).ready(function() {
   const average = (a) => a.reduce((sum, value) => sum + value, 0) / a.length
   
   function loadHouses(houses) {
-    var prev = {}
-    var last = {}
+    var year = {}
+    var term = {}
+    var week = {}
     let deferred = []
     $.each(houses.d, function() {
       let house = this.id
       deferred.push(
         getAttendance(house, startYear.toISOString(), lastMonday.toISOString())
-        .done((students) => loadAttendance(students, house, prev)),
+        .done((students) => loadAttendance(students, house, year)),
+        getAttendance(house, startTerm.toISOString(), endToday.toISOString())
+        .done((students) => loadAttendance(students, house, term)),
         getAttendance(house, lastMonday.toISOString(), endToday.toISOString())
-        .done((students) => loadAttendance(students, house, last))
+        .done((students) => loadAttendance(students, house, week))
       )
     })
     $.when(...deferred).done(function() {
       let top = [0, 0, 0]
       // sort keys in numerial order
       const collator = new Intl.Collator([], {numeric: true})
-      Object.keys(last)
+      Object.keys(week)
       .sort((a, b) => collator.compare(a, b))
       .forEach(function(v, i) {
-        let n = average(last[v]).toFixed(1)
+        let n = average(week[v]).toFixed(1)
         let row = $('<tr>')
         row.appendTo('#dash tbody')
         const checkTop = (i) => {
@@ -174,8 +198,10 @@ $(document).ready(function() {
         }
         $('<td>').html(`<a href="${url}">${v}</a>`).appendTo(row)
         const hsla = (n) => `hsla(${120*(n/100)**2}, 80%, 80%, 0.8)`
-        let p = average(prev[v]).toFixed(1)
-        $('<td>').text(`${p}%`).css('background-color', hsla(p)).appendTo(row)
+        let y = average(year[v]).toFixed(1)
+        let t = average(term[v]).toFixed(1)
+        $('<td>').text(`${y}%`).css('background-color', hsla(y)).appendTo(row)
+        $('<td>').text(`${t}%`).css('background-color', hsla(t)).appendTo(row)
         $('<td>').text(`${n}%`).css('background-color', hsla(n)).appendTo(row)
       })
     })
